@@ -1,0 +1,102 @@
+## CORE LIB
+recipe apt(packages):
+    setup: sudo apt-get install -y $((packages))
+    is_setup:
+      for pkg in $(echo $((packages)) | tr " " "\n"); do
+        if ! dpkg -l "$pkg" &> /dev/null; then
+          echo "$pkg is not installed."
+          exit 1
+        fi
+      done
+
+recipe pipx(packages):
+    setup: pipx install $((packages))
+    is_setup: todo
+
+
+recipe git(repo dist):
+    setup: git clone $((repo)) $((dist))
+    is_setup: test -d $((dist))
+
+
+recipe ln(src dst):
+    setup: ln -fs $((src)) $((dst))
+    is_setup: test -L $((dst)) && test -e $((dst))
+
+## USER TARGETS
+
+essentials <- files.git notes terminal shell pipx pyenv
+essentials: apt(wget git vim autokey-gtk silversearcher-ag
+        gawk xclip gnome-disk-utility cryptsetup build-essential
+        dconf-editor ripgrep xdotool luarocks cmake
+        libterm-readkey-perl expect ssh curl, foo)
+
+ssh_config:
+    setup: ssh-keygen -q -f ~/.ssh/id_rsa -N "" 
+    is_setup: test -f ~/.ssh/id_rsa
+
+
+files.git <- ln_autokey ln_ctags ln_gitconfig ln_gitconfig ln_tmux_conf ln_xbindkeysrc ln_xmodmap ln_kitty_conf
+files.git: git(naddeo@do.naddeo.org:~/git/files, ~/files)
+
+notes: git(naddeo@do.naddeo.org:~/git/notes, ~/notes)
+
+terminal: apt(kitty fish tmux)
+
+pipx: apt(pipx)
+
+ln_autokey: ln(files/autokey, ~/.config/autokey)
+ln_ctags: ln(files/.ctags, ~/.ctags)
+ln_gitconfig: ln(files/.gitconfig, ~/.gitconfig)
+ln_tmux_conf: ln(files/.tmux.conf, ~/.tmux.conf)
+ln_xbindkeysrc: ln(files/.xbindkeysrc, ~/.xbindkeysrc)
+ln_xmodmap: ln(files/.Xmodmap, ~/.Xmodmap)
+ln_kitty_conf: ln(files/kitty.conf, ~/.config/kitty/kitty.conf)
+
+
+
+pyenv -> pipx
+pyenv <- python3.7 python3.8 python3.9 python3.10
+pyenv:
+    setup: 
+        apt(build-essential libssl-dev zlib1g-dev libncurses5-dev 
+            libncursesw5-dev libreadline-dev libsqlite3-dev libgdbm-dev 
+            libdb5.3-dev libbz2-dev libexpat1-dev liblzma-dev tk-dev libffi-dev)
+        curl https://pyenv.run | bash
+
+    is_setup: which pyenv
+
+
+
+recipe pyenv_python(version_string):
+    setup: pyenv install $((version_string))
+    is_setup: pyenv versions | grep $((version_string))
+
+python3.7: pyenv_python(3.7)
+python3.8: pyenv_python(3.8)
+python3.9: pyenv_python(3.9)
+python3.10: pyenv_python(3.10)
+
+
+poetry -> pyenv
+poetry: pipx(poetry)
+
+omf:
+    setup: 
+        curl https://raw.githubusercontent.com/oh-my-fish/oh-my-fish/master/bin/install > /tmp/fish-install 
+        chmod +x /tmp/fish-install
+        /tmp/fish-install --noninteractive
+
+    is_setup: fish -c "omf list"
+
+
+omf_config:
+    setup: fish -c "omf install fzf clearance"
+
+    is_setup: fish -c "omf list" | grep clearance && fish -c "omf list" | grep fzf 
+
+shell:
+    setup: sudo chsh -s /usr/bin/fish $(USER)
+
+    is_setup: getent passwd $(id -un) | awk -F : '{print $NF}' | grep /usr/bin/fish
+

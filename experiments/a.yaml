@@ -1,0 +1,73 @@
+
+dependencies:
+  is_depended_by:
+    essentials: files.git notes terminal shell agave_font pipx pyenv
+    files.git: ln_code ln_autokey ln_ctags ln_gitconfig ln_gitconfig ln_tmux_conf ln_xbindkeysrc ln_xmodmap ln_kitty_conf
+    pipx: python37 python38 python39 python310 pyenv poetry
+  depends_on: 
+    omf: terminal
+    omf-config: omf terminal
+
+
+
+recipes:
+  apt:
+    variables:
+      - packages
+    setup: sudo apt install -y $((variables.packages))
+    is_setup: |
+      for pkg in $(echo $((variables.packages)) | tr " " "\n"); do
+        if ! dpkg -l "$pkg" &> /dev/null; then
+          echo "$pkg is not installed."
+        else
+          echo "$pkg is installed."
+        fi
+      done
+  git:
+    variables:
+      - repo
+      - dest
+    setup: git clone $((variables.repo)) $((variables.dest))
+    is_setup: test -f $((variables.dest))
+
+
+
+
+targets:
+  essentials:
+    recipe: apt
+    packages: >
+        wget git vim autokey-gtk silversearcher-ag
+        gawk xclip gnome-disk-utility cryptsetup build-essential
+        dconf-editor ripgrep xdotool luarocks cmake
+        libterm-readkey-perl expect ssh curl
+  
+  ssh_config:
+    setup: ssh-keygen -q -f ~/.ssh/id_rsa -N ""
+    is_setup: test -f ~/.ssh/id_rsa
+  files.git:
+    recipe: git
+    repo: naddeo@do.naddeo.org:~/git/files
+    dest: ~/files
+  notes:
+    recipe: git
+    repo: naddeo@do.naddeo.org:~/git/notes
+    dest: ~/notes
+  terminal:
+    recipe: apt
+    packages: kitty fish tmux
+  omf:
+    setup: |
+      curl https://raw.githubusercontent.com/oh-my-fish/oh-my-fish/master/bin/install > /tmp/fish-install 
+      chmod +x /tmp/fish-install
+      /tmp/fish-install --noninteractive
+    is_setup:
+      fish -c "omf list"
+  omf_config:
+    setup: fish -c "omf install fzf clearance"
+    is_setup: |
+      fish -c "omf list" | grep clearance && fish -c "omf list" | grep fzf 
+  shell: 
+    setup: sudo chsh -s /usr/bin/fish $(USER)
+    is_setup: getent passwd $(id -un) | awk -F : '{print $NF}' | grep /usr/bin/fish
+

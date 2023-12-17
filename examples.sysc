@@ -1,0 +1,66 @@
+
+[lib]
+import os
+import sys
+
+
+def get_os():
+    pass
+
+
+def distrio():
+    pass
+
+
+
+[installs]
+
+essentials: sudo apt install 
+    git
+    vim
+    autokey-gtk
+    silversearcher-ag
+    kitty
+    gawk
+    xclip
+    tmux
+    gnome-disk-utility
+    cryptsetup
+    build-essential
+    dconf-editor
+    ripgrep
+    xdotool  # for keybinds and tdrop
+    luarocks
+    cmake
+    libterm-readkey-perl
+    expect
+
+
+_ -> essentials: git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+files -> essentials: git clone do.naddeo.org:~/git/files ~/files
+
+
+dot_files -> files: ln -fs
+    ~/files/conf/Code ~/.config/Code
+    ~/files/conf/autokey ~/.config/autokey
+    ~/files/conf/.ctags ~/.ctags
+    ~/files/conf/.gitconfig ~/.gitconfig
+    ~/files/conf/.tmux.conf ~/.tmux.conf
+    ~/files/conf/.toprc ~/.toprc
+    ~/files/conf/.xbindkeysrc ~/.xbindkeysrc
+    ~/files/conf/.Xmodmap ~/.Xmodmap
+    ~/files/conf/kitty.conf ~/.config/kitty/kitty.conf
+    ~/files/conf/.vimrc ~/.vimrc
+    ~/files/conf/ftplugin ~/.vim/ftplugin
+    ~/files/conf/syntax ~/.vim/syntax
+
+
+[installs.python]
+
+# How to make this automatically depend on the other apt things? Too obvious
+pipx: sudo apt install pipx
+
+pyenv: curl https://pyenv.run | bash
+-> pyenv: pyenv install 3.7 3.8 3.9 3.10
+pipx install poetry
+
