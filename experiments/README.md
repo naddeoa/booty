@@ -21,5 +21,4 @@
 
 
 # TODO
-- CLI with colors
-- Execution plan
+- Update the exection to show the current line from stdout on the row details. Going to be a little big to refactor

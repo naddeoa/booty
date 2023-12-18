@@ -1,7 +1,8 @@
+from collections.abc import Generator
 from dataclasses import dataclass, field
 import re
 import subprocess
-from typing import Dict, List, Sequence, Union
+from typing import Dict, List, Literal, Sequence, Union
 
 
 @dataclass
@@ -9,7 +10,7 @@ class ShellCommand:
     command: str
 
     def execute(self) -> None:
-        subprocess.run(["bash", "-c", self.command])
+        subprocess.run(["bash", "-c", self.command], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
 
 @dataclass
@@ -59,48 +60,52 @@ class RecipeDefinition:
         Execute the setup method of the recipe.
         """
         setup = self.defs["setup"]
-        for executable in setup:
-            if isinstance(executable, ShellCommand):
-                # Substitute the arguments into the shell command by replacing $(( ... )) with the argument.
-                command = executable.command
-                final_command = self._substitute_arg_values(command, self.parameters, args)
-                subprocess.run(final_command, shell=True)
+        self._execute(args, setup, recipes, method="setup")
 
-            else:
-                recipe = recipes[executable.name]
-                recipe.setup(executable.args, recipes)
-
-    def is_setup(self, args: Sequence[Sequence[str]], recipes: Dict[str, "RecipeDefinition"]) -> bool:
+    def is_setup(self, args: Sequence[Sequence[str]], recipes: Dict[str, "RecipeDefinition"]) -> None:
         """
         Check if the recipe is setup.
         """
-        print()
-        print('==========================')
-        print(f"Executing is_setup for {self.name} with args {args}")
-
         # next up, string templating with the def/parameters, assuming the order of parameters matches the order of args
 
         is_setup = self.defs["is_setup"]
+        self._execute(args, is_setup, recipes, method="is_setup")
 
-        failures = False
-        for executable in is_setup:
+    def _execute(
+        self,
+        args: Sequence[Sequence[str]],
+        executables: List[Executable],
+        recipes: Dict[str, "RecipeDefinition"],
+        method: Literal["setup", "is_setup"],
+    ) -> None:
+        for command in self._iter_commands(args, executables, recipes, method):
+            subprocess.run(["bash", "-c", command], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+    def get_setup_commands(self, args: Sequence[Sequence[str]], recipes: Dict[str, "RecipeDefinition"]) -> List[str]:
+        return list(self._iter_commands(args, self.defs["setup"], recipes, method="setup"))
+
+    def get_is_setup_commands(self, args: Sequence[Sequence[str]], recipes: Dict[str, "RecipeDefinition"]) -> List[str]:
+        return list(self._iter_commands(args, self.defs["is_setup"], recipes, method="is_setup"))
+
+    def _iter_commands(
+        self,
+        args: Sequence[Sequence[str]],
+        executables: List[Executable],
+        recipes: Dict[str, "RecipeDefinition"],
+        method: Literal["setup", "is_setup"],
+    ) -> Generator[str, None, None]:
+        for executable in executables:
             if isinstance(executable, ShellCommand):
                 # Substitute the arguments into the shell command by replacing $(( ... )) with the argument.
                 command = executable.command
                 final_command = self._substitute_arg_values(command, self.parameters, args)
-                print(f"Executing command: {final_command}")
-
-                result = subprocess.run(["bash", "-c", final_command], shell=False)
-                if result.returncode == 0:
-                    failures = True
-
+                yield final_command
             else:
                 recipe = recipes[executable.name]
-                return recipe.is_setup(executable.args, recipes)
-
-        print('==========================')
-        print()
-        return failures
+                if method == "setup":
+                    recipe.setup(executable.args, recipes)
+                else:
+                    recipe.is_setup(executable.args, recipes)
 
     def _substitute_arg_values(self, command: str, arg_names: Sequence[str], args: Sequence[Sequence[str]]) -> str:
         """

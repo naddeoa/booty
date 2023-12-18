@@ -11,7 +11,7 @@ recipe apt(packages):
 
 recipe pipx(packages):
     setup: pipx install $((packages))
-    is_setup: todo
+    is_setup: pipx list | grep $((packages))
 
 
 recipe git(repo dist):
@@ -29,14 +29,18 @@ essentials <- files.git notes terminal shell pipx pyenv
 essentials: apt(wget git vim autokey-gtk silversearcher-ag
         gawk xclip gnome-disk-utility cryptsetup build-essential
         dconf-editor ripgrep xdotool luarocks cmake
-        libterm-readkey-perl expect ssh curl, foo)
+        libterm-readkey-perl expect ssh curl)
+
+
+fun: apt(vim)
+
 
 ssh_config:
     setup: ssh-keygen -q -f ~/.ssh/id_rsa -N "" 
     is_setup: test -f ~/.ssh/id_rsa
 
 
-files.git <- ln_autokey ln_ctags ln_gitconfig ln_gitconfig ln_tmux_conf ln_xbindkeysrc ln_xmodmap ln_kitty_conf
+files.git <- ln_autokey ln_ctags ln_gitconfig ln_tmux_conf ln_xbindkeysrc ln_xmodmap ln_kitty_conf
 files.git: git(naddeo@do.naddeo.org:~/git/files, ~/files)
 
 notes: git(naddeo@do.naddeo.org:~/git/notes, ~/notes)
@@ -56,30 +60,36 @@ ln_kitty_conf: ln(files/kitty.conf, ~/.config/kitty/kitty.conf)
 
 
 pyenv -> pipx
-pyenv <- python3.7 python3.8 python3.9 python3.10
+pyenv <- python3.11 python3.7 python3.8 python3.9 python3.10
 pyenv:
     setup: 
         apt(build-essential libssl-dev zlib1g-dev libncurses5-dev 
             libncursesw5-dev libreadline-dev libsqlite3-dev libgdbm-dev 
             libdb5.3-dev libbz2-dev libexpat1-dev liblzma-dev tk-dev libffi-dev)
         curl https://pyenv.run | bash
-
     is_setup: which pyenv
 
 
 
 recipe pyenv_python(version_string):
     setup: pyenv install $((version_string))
+
     is_setup: pyenv versions | grep $((version_string))
 
 python3.7: pyenv_python(3.7)
 python3.8: pyenv_python(3.8)
 python3.9: pyenv_python(3.9)
 python3.10: pyenv_python(3.10)
+python3.11: pyenv_python(3.11)
 
 
 poetry -> pyenv
 poetry: pipx(poetry)
+
+poetry_config -> poetry
+poetry_config:
+    setup: poetry config virtualenvs.in-project true
+    is_setup: grep "in-project = true" ~/.config/pypoetry/config.toml
 
 omf:
     setup: 
@@ -97,6 +107,4 @@ omf_config:
 
 shell:
     setup: sudo chsh -s /usr/bin/fish $(USER)
-
     is_setup: getent passwd $(id -un) | awk -F : '{print $NF}' | grep /usr/bin/fish
-

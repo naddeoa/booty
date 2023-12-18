@@ -10,6 +10,6 @@ def parse(text: str) -> ParseTree:
         grammar_file = "./systemconf/grammar.lark"
         with open(grammar_file) as f:
             grammer = f.read()
-            __parser = Lark(grammer, debug=True)
+        __parser = Lark(grammer, debug=True)
 
     return __parser.parse(text)

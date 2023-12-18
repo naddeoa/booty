@@ -20,9 +20,9 @@ def: (single_line_def | multi_line_def)+
 
 def_body: (shell_line | recipe_invocation)*
 
-single_line_def: implements ":" (shell_line | recipe_invocation) _NEW_LINE* 
+single_line_def.1: implements ":" (shell_line | recipe_invocation) _NEW_LINE*
 
-multi_line_def: implements ":" _NEW_LINE def_body _NEW_LINE
+multi_line_def.1: implements ":" _NEW_LINE def_body _NEW_LINE*
 
 recipe_invocation.1: NAME "(" recipe_parameter_list ")" _NEW_LINE
 

@@ -1,7 +1,7 @@
 from pprint import pprint
 from systemconf.ast_util import get_dependencies, get_executable_index, get_recipe_definition_index
 from systemconf.dependencies import get_dependency_graph
-from systemconf.execute import SystemconfData, check_status
+from systemconf.execute import SystemconfData, check_status_all
 
 from systemconf.parser import parse
 from systemconf.validation import validate
@@ -139,11 +139,11 @@ executables = get_executable_index(ast)
 # recipe_definitions = get_recipe_definitions(ast)
 # print()
 # print("Recipe Definitions:")
-print('======= Executables =======')
+print("======= Executables =======")
 pprint(executables, width=180)
 
 recipes = get_recipe_definition_index(ast)
-print('======= Recipes =======')
+print("======= Recipes =======")
 pprint(recipes, width=180)
 
 
@@ -151,4 +151,4 @@ conf = SystemconfData(execution_index=executables, recipe_index=recipes, G=G, as
 
 validate(conf)
 
-check_status(conf)
+check_status_all(conf)

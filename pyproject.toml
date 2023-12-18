@@ -10,6 +10,9 @@ readme = "README.md"
 python = "^3.10"
 lark = "^1.1.8"
 networkx = "^3.2.1"
+click = "^8.1.7"
+pytermgui = "^7.7.0"
+progress-table = "^0.1.27"
 
 
 [tool.poetry.group.dev.dependencies]

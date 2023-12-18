@@ -14,7 +14,9 @@ def get_target_names(ast: ParseTree) -> List[str]:
     return targets
 
 
-TargetIndex = Dict[str, List[str]]
+DependencyIndex = Dict[TargetNames, List[TargetNames]]
+
+ExecutableIndex = Dict[TargetNames, Dict[str, List[Executable]]]
 
 
 def find_tokens(ast: ParseTree, token_name: str) -> Sequence[Token]:
@@ -40,10 +42,10 @@ def find_token_values(ast: ParseTree, token_name: str) -> Sequence[str]:
     return [it.value for it in find_tokens(ast, token_name)]
 
 
-def get_dependencies(ast: ParseTree) -> TargetIndex:
+def get_dependencies(ast: ParseTree, executable_index: ExecutableIndex) -> DependencyIndex:
     depends_on = list(ast.find_pred(lambda x: x.data == "depends_on"))
     deppended_upon = list(ast.find_pred(lambda x: x.data == "depended_upon"))
-    dependencies: Dict[str, List[str]] = {}
+    dependencies: Dict[str, List[str]] = {target: [] for target in executable_index.keys()}
     for it in depends_on:
         target_name = str(it.children[0])
         dependencies[target_name] = dependencies.get(target_name, None) or []
@@ -61,7 +63,7 @@ def get_dependencies(ast: ParseTree) -> TargetIndex:
     return dependencies
 
 
-def get_zero_dependency_targets(dependencies: TargetIndex) -> List[str]:
+def get_zero_dependency_targets(dependencies: DependencyIndex) -> List[str]:
     return [k for k, v in dependencies.items() if len(v) == 0]
 
 
@@ -80,9 +82,6 @@ def str_value(tree: Union[Tree[Token], Iterator[Tree[Token]]]) -> str:
         return tree.children[0].value  # type: ignore[reportUnknownMemberType]
     else:
         return next(tree).children[0].value  # type: ignore[reportUnknownMemberType]
-
-
-ExecutableIndex = Dict[TargetNames, Dict[str, List[Executable]]]
 
 
 def get_executable_index(ast: ParseTree) -> ExecutableIndex:
