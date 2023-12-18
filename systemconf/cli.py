@@ -10,18 +10,22 @@ from systemconf.app import App
 def cli(config: str, status: bool = True, install: bool = False):
     app = App(config)
 
+    has_errors = False
     if install:
         status_result = app.status()
-        if not status_result.missing:
-            return
+        if status_result.errors:
+            has_errors = True
 
-        click.confirm("Install all missing targets?", abort=True)
-        app.install_missing(status_result)
-        return
+        if status_result.missing:
+            click.confirm("Install all missing targets?", abort=True)
+            app.install_missing(status_result)
+    elif status:
+        if app.status().errors:
+            has_errors = True
 
-    if status:
-        app.status()
-        return
+    if has_errors:
+        click.echo("There were errors. See above.")
+        exit(1)
 
 
 if __name__ == "__main__":

@@ -32,7 +32,9 @@ essentials: apt(wget git vim autokey-gtk silversearcher-ag
         libterm-readkey-perl expect ssh curl)
 
 
-fun: apt(vim)
+doomed: 
+    setup: failing 
+    is_setup: failing
 
 
 ssh_config:

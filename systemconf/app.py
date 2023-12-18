@@ -1,8 +1,7 @@
 from dataclasses import dataclass, field
 import time
-from typing import Any, Dict, Generator, List, cast
+from typing import Any, Dict, Generator, List, Literal, cast
 
-from progress_table.symbols import SymbolsUnicodeBare
 from systemconf.ast_util import get_dependencies, get_executable_index, get_recipe_definition_index, get_zero_dependency_targets
 from systemconf.dependencies import bfs_iterator, get_dependency_graph
 from systemconf.execute import SystemconfData, check_target_status, install_target
@@ -106,11 +105,12 @@ class App:
         }
         largest_dependency_name = max([len(t) for t in dependency_strings.values()])
 
-        table = ProgressTable(default_column_alignment="left", table_style="bare", embedded_progress_bar=True)
+        table = ProgressTable(default_column_alignment="left", table_style="bare", embedded_progress_bar=True, refresh_rate=10)
         table.add_column("target", width=largest_target_name + 2)  # type: ignore[reportUnknownMemberType]
         table.add_column("dependencies", width=largest_dependency_name + 2)  # type: ignore[reportUnknownMemberType]
         table.add_column("status", width=15)  # type: ignore[reportUnknownMemberType]
-        table.add_column("details", width=60)  # type: ignore[reportUnknownMemberType]
+        table.add_column("details", width=70)  # type: ignore[reportUnknownMemberType]
+        table.add_column("time", width=15)  # type: ignore[reportUnknownMemberType]
 
         prog: Generator[str, Any, None] = cast(Generator[str, Any, None], table(bfs_iterator(self.data.G)))
         status_result = StatusResult()
@@ -119,11 +119,17 @@ class App:
             table["target"] = target
             table["dependencies"] = deps_string
 
+            exec = self.data.execution_index[target]
             time.sleep(0.01)
             table["status"] = "🟡 Checking..."
             time.sleep(0.01)
+            table["details"] = self._display_is_setup(exec)
+            time.sleep(0.01)
 
+            start_time = time.perf_counter()
             result = check_target_status(self.data, target)
+            total_time = time.perf_counter() - start_time
+            table["time"] = f"{total_time:.2f}s"
 
             if result is None:
                 table["status"] = "🟢 Installed"
@@ -154,6 +160,7 @@ class App:
         table.add_column("target", width=largest_target_name + 2)  # type: ignore[reportUnknownMemberType]
         table.add_column("status", width=15)  # type: ignore[reportUnknownMemberType]
         table.add_column("details", width=100)  # type: ignore[reportUnknownMemberType]
+        table.add_column("time", width=15)  # type: ignore[reportUnknownMemberType]
         missing_packages = set(status_result.missing)
 
         prog: Generator[str, Any, None] = cast(Generator[str, Any, None], table(bfs_iterator(self.data.G)))
@@ -171,7 +178,11 @@ class App:
             table["details"] = self._display_setup(exec)
             time.sleep(0.01)
 
+            start_time = time.perf_counter()
             result = install_target(self.data, target)
+            total_time = time.perf_counter() - start_time
+            table["time"] = f"{total_time:.2f}s"
+
             if result is None:
                 table["status"] = "🟢 Installed"
             else:
@@ -185,17 +196,28 @@ class App:
 
         table.close()
 
-    def _display_setup(self, it: Dict[str, List[Executable]]) -> str:
-        exec = it["setup"] if "setup" in it else it["recipe"]
+    def _display(self, it: Dict[str, List[Executable]], method: Literal["setup", "is_setup"]) -> str:
+        exec = it[method] if method in it else it["recipe"]
 
         commands: List[str] = []
         for executable in exec:
             if isinstance(executable, RecipeInvocation):
                 recipe = self.data.recipe_index[executable.name]
-                commands.append("\n".join(recipe.get_setup_commands(executable.args, self.data.recipe_index)))
+                if method == "setup":
+                    commands.append("\n".join(recipe.get_setup_commands(executable.args, self.data.recipe_index)))
+                else:
+                    commands.append("\n".join(recipe.get_is_setup_commands(executable.args, self.data.recipe_index)))
             else:
                 commands.append(executable.command)
 
         # TODO what's the best way to display multiple commands? They're bound to be too long. For now
         # I'll just show the first one and maybe append a "..." if there are more.
-        return f"{commands[0]} {'...' if len(commands) > 1 else ''}"
+        has_multiple_commands = len(commands) > 1 or "\n" in commands[0]
+        first_command = commands[0].strip().replace("\n", "\\n")[:60]
+        return f"{first_command}{'...' if has_multiple_commands else ''}"
+
+    def _display_is_setup(self, it: Dict[str, List[Executable]]) -> str:
+        return self._display(it, method="is_setup")
+
+    def _display_setup(self, it: Dict[str, List[Executable]]) -> str:
+        return self._display(it, method="setup")
