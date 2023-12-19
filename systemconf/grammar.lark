@@ -41,11 +41,11 @@ INVOCATION_ARGS: /[^\n \t\),]+/
 target_name: NAME
 
 arguments: ARGUMENT_NAME*
-ARGUMENT_NAME: /[a-zA-Z0-9_\.]+/
+ARGUMENT_NAME: /[a-zA-Z0-9_\.-]+/
 
-NAME: /[a-zA-Z0-9_\.]+/
-RECIPE_NAME: /[a-zA-Z0-9_\.]+/
+NAME: /[a-zA-Z0-9_\.-]+/
+RECIPE_NAME: /[a-zA-Z0-9_\.-]+/
 
 # Note the leadering space before implements. It has to be indented somewhat.
-IMPLEMENTS_NAME: /[ \t]+[a-zA-Z0-9_\.]+/
+IMPLEMENTS_NAME: /[ \t]+[a-zA-Z0-9_\.-]+/
 _NEW_LINE: /\n/

@@ -23,3 +23,7 @@
 # TODO
 - Don't attempt to install targets if their dependencies can't be installed
 - Update the exection to show the current line from stdout on the row details. Going to be a little big to refactor
+- packae it up as an executable cli in pip
+- make my real install.sysc
+- Make a syntax/treesitter integration
+- Add support for importing recipes

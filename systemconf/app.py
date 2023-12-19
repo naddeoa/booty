@@ -137,7 +137,7 @@ class App:
             else:
                 if result.returncode == 1:
                     table["status"] = "🟡 Not installed"
-                    table["details"] = result.stdout
+                    table["details"] = result.stdout if result.stdout else table["details"]
                     status_result.missing.append(target)
                 else:
                     # TODO send PR to library to fix the formatting with unicode/emoji. Length is wrong.
@@ -210,7 +210,7 @@ class App:
             else:
                 commands.append(executable.command)
 
-        # TODO what's the best way to display multiple commands? They're bound to be too long. For now
+        # what's the best way to display multiple commands? They're bound to be too long. For now
         # I'll just show the first one and maybe append a "..." if there are more.
         has_multiple_commands = len(commands) > 1 or "\n" in commands[0]
         first_command = commands[0].strip().replace("\n", "\\n")[:60]

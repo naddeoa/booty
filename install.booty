@@ -1,0 +1,127 @@
+##
+## Lib
+##
+recipe apt(packages):
+    setup: sudo apt-get install -y $((packages))
+    is_setup:
+      for pkg in $(echo $((packages)) | tr " " "\n"); do
+        if ! dpkg -l "$pkg" &> /dev/null; then
+          echo "$pkg is not installed."
+          exit 1
+        fi
+      done
+
+recipe pipx(packages):
+    setup: pipx install $((packages))
+    is_setup: pipx list | grep $((packages))
+
+
+recipe git(repo dist):
+    setup: git clone $((repo)) $((dist))
+    is_setup: test -d $((dist))
+
+recipe ln(src dst):
+    setup: 
+        mkdir -p $(dirname $((dst)))
+        ln -fs $((src)) $((dst))
+    is_setup: test -L $((dst)) && test -e $((dst))
+
+
+##
+## Targets
+##
+
+essentials: apt(wget git vim autokey-gtk silversearcher-ag gawk xclip
+    gnome-disk-utility cryptsetup build-essential dconf-editor ripgrep xdotool
+    luarocks cmake libterm-readkey-perl expect ssh curl)
+
+files.git -> essentials
+files.git: git(naddeo@do.naddeo.org:~/git/files, ~/files)
+
+notes.git -> essentials
+notes.git: git(naddeo@do.naddeo.org:~/git/notes, ~/notes)
+
+ssh_conf -> essentials
+ssh_conf:
+    setup: ssh-keygen
+    is_setup: test -f ~/.ssh/id_rsa.pub
+
+## Terminal stuff
+
+terminal -> essentials
+terminal: apt(kitty fish tmux)
+
+omf -> terminal
+omf:
+    setup:
+        curl https://raw.githubusercontent.com/oh-my-fish/oh-my-fish/master/bin/install > /tmp/fish-install 
+        chmod +x /tmp/fish-install
+        /tmp/fish-install --noninteractive
+    is_setup: fish -c 'omf --version'
+
+omf-config -> omf
+omf-config: 
+    setup: fish -c "omf install fzf clearance"
+    is_setup: 
+        fish -c "omf list | grep fzf"
+        fish -c "omf list | grep clearance"
+
+shell -> essentials
+shell: 
+    setup: sudo chsh -s /usr/bin/fish $(USER)
+    is_setup: test $(echo $SHELL) = $(which fish)
+
+tpm -> terminal
+tpm: git(https://github.com/tmux-plugins/tpm, ~/.tmux/plugins/tpm)
+
+agave_font -> essentials
+agave_font:
+    setup:
+        curl https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/Agave.zip -o /tmp/agave.zip
+        mkdir -p ~/.fonts
+        unzip /tmp/agave.zip -d ~/.fonts/
+        fc-cache -f -v
+    is_setup: fc-list | grep Agave
+
+
+## Dotfile symlinks
+files.git <- ln_Code ln_autokey ln_ctags ln_gitconfig ln_tmux.conf ln_toprc ln_xbindkeysrc ln_Xmodmap ln_kitty.conf
+ln_Code: ln(~/files/conf/vscode, ~/.config/Code)
+ln_autokey: ln(~/files/conf/autokey, ~/.config/autokey)
+ln_ctags: ln(~/files/conf/.ctags, ~/.ctags)
+ln_gitconfig: ln(~/files/conf/.gitconfig, ~/.gitconfig)
+ln_tmux.conf: ln(~/files/conf/.tmux.conf, ~/.tmux.conf)
+ln_toprc: ln(~/files/conf/.toprc, ~/.toprc)
+ln_xbindkeysrc: ln(~/files/conf/.xbindkeysrc, ~/.xbindkeysrc)
+ln_Xmodmap: ln(~/files/conf/.Xmodmap, ~/.Xmodmap)
+ln_kitty.conf: ln(~/files/conf/kitty.conf, ~/.config/kitty/kitty.conf)
+
+
+## Python
+recipe pyenv(version):
+    setup:
+        pyenv install $((version))
+    is_setup:
+        pyenv versions | grep $((version))
+
+pipx -> essentials terminal
+pipx: apt(pipx)
+
+pyenv -> essentials terminal pipx
+pyenv <- python3.7 python3.8 python3.9 python3.10
+pyenv:
+    setup: 
+        apt(build-essential libssl-dev zlib1g-dev libncurses5-dev libncursesw5-dev
+            libreadline-dev libsqlite3-dev libgdbm-dev libdb5.3-dev libbz2-dev
+            libexpat1-dev liblzma-dev tk-dev libffi-dev)
+        curl https://pyenv.run | bash
+    is_setup: test -e ~/.pyenv/bin/pyenv
+
+python3.7: pyenv(3.7)
+python3.8: pyenv(3.8)
+python3.9: pyenv(3.9)
+python3.10: pyenv(3.10)
+
+poetry -> pipx
+poetry: pipx(poetry)
+
