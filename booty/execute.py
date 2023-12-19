@@ -3,9 +3,9 @@ from typing import Callable, Dict, List, Optional
 from lark import ParseTree
 import networkx as nx
 from dataclasses import dataclass
-from systemconf.ast_util import ExecutableIndex, RecipeDefinitionIndex, DependencyIndex
-from systemconf.dependencies import bfs_iterator
-from systemconf.types import Executable, ShellCommand
+from booty.ast_util import ExecutableIndex, RecipeDefinitionIndex, DependencyIndex
+from booty.dependencies import bfs_iterator
+from booty.types import Executable, ShellCommand
 
 
 @dataclass

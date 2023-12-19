@@ -1,6 +1,6 @@
-from systemconf.dependencies import bfs_iterator, has_cycles
-from systemconf.execute import SystemconfData
-from systemconf.types import RecipeInvocation
+from booty.dependencies import bfs_iterator, has_cycles
+from booty.execute import SystemconfData
+from booty.types import RecipeInvocation
 
 
 def validate(data: SystemconfData) -> None:
@@ -39,3 +39,14 @@ def validate(data: SystemconfData) -> None:
             for executable in exec["recipe"]:
                 if isinstance(executable, RecipeInvocation) and executable.name not in data.recipe_index:
                     raise Exception(f"Recipe '{executable.name}' invoked by target '{target}' does not exist.")
+
+    # validate that the number of args passed into each recipe invocation matches the number of args in the recipe
+    for target, exec in data.execution_index.items():
+        if "recipe" in exec:
+            for executable in exec["recipe"]:
+                if isinstance(executable, RecipeInvocation):
+                    recipe = data.recipe_index[executable.name]
+                    if len(executable.args) != len(recipe.parameters):
+                        raise Exception(
+                            f"Recipe '{executable.name}' invoked by target '{target}' has {len(recipe.parameters)} args but was invoked with {len(executable.args)} args."
+                        )

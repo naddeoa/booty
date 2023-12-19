@@ -2,12 +2,12 @@ from dataclasses import dataclass, field
 import time
 from typing import Any, Dict, Generator, List, Literal, cast
 
-from systemconf.ast_util import get_dependencies, get_executable_index, get_recipe_definition_index, get_zero_dependency_targets
-from systemconf.dependencies import bfs_iterator, get_dependency_graph
-from systemconf.execute import SystemconfData, check_target_status, install_target
-from systemconf.parser import parse
-from systemconf.types import Executable, RecipeInvocation
-from systemconf.validation import validate
+from booty.ast_util import get_dependencies, get_executable_index, get_recipe_definition_index, get_zero_dependency_targets
+from booty.dependencies import bfs_iterator, get_dependency_graph
+from booty.execute import SystemconfData, check_target_status, install_target
+from booty.parser import get_lang_path, parse
+from booty.types import Executable, RecipeInvocation
+from booty.validation import validate
 
 from progress_table import ProgressTable
 
@@ -20,6 +20,7 @@ class StatusResult:
     missing: List[str] = field(default_factory=list)
     errors: List[str] = field(default_factory=list)
     installed: List[str] = field(default_factory=list)
+    total_time: float = 0.0
 
 
 class App:
@@ -29,31 +30,26 @@ class App:
 
     def setup(self) -> SystemconfData:
         """
-        Parse the config file and create all of the indexes that we'll need to execute the systemconf.
+        Parse the config file and create all of the indexes that we'll need to execute the booty.
         Also runs validation.
         """
         with open(self.config_path) as f:
             config = f.read()
 
+        with open(get_lang_path("stdlib.booty")) as f2:
+            stdlib = f2.read()
+
         ast = parse(config)
+        stdlib_ast = parse(stdlib)
         executables = get_executable_index(ast)
         dependencies = get_dependencies(ast, executables)
         G = get_dependency_graph(dependencies)
         recipes = get_recipe_definition_index(ast)
-        conf = SystemconfData(execution_index=executables, recipe_index=recipes, G=G, ast=ast, dependency_index=dependencies)
+        std_recipes = get_recipe_definition_index(stdlib_ast)
+        all_recipes = {**std_recipes, **recipes}  # Make the user recipes overwrite the stdlib ones
+        conf = SystemconfData(execution_index=executables, recipe_index=all_recipes, G=G, ast=ast, dependency_index=dependencies)
         validate(conf)
         return conf
-
-    def list_targets(self) -> None:
-        """
-        List all targets in the systemconf.
-        """
-
-        # for target in self.data.execution_index.keys():
-        # print(target)
-
-        for target in bfs_iterator(self.data.G):
-            print(target)
 
     def list_dependencies(self) -> None:
         """
@@ -78,23 +74,6 @@ class App:
 
         table.close()
 
-    def ls(self) -> None:
-        zero_deps = get_zero_dependency_targets(self.data.dependency_index)
-        for target in bfs_iterator(self.data.G, zero_deps[0]):
-            deps = self.data.dependency_index[target]
-            deps_string = ", ".join(deps)
-            exec = self.data.execution_index[target]
-
-            # Print out target/dependencies
-            print(target)
-            print(f"  ↳ Dependencies: {deps_string}")
-
-            # Summarize how the target is installed
-            if "recipe" in exec:
-                recipe = exec["recipe"]
-                for reipe_or_shell in recipe:
-                    print(f"  ↳ Recipe: {reipe_or_shell}")
-
     def status(self) -> StatusResult:
         """
         List the install status of each target
@@ -105,7 +84,13 @@ class App:
         }
         largest_dependency_name = max([len(t) for t in dependency_strings.values()])
 
-        table = ProgressTable(default_column_alignment="left", table_style="bare", embedded_progress_bar=True, refresh_rate=10)
+        table = ProgressTable(
+            default_column_alignment="left",
+            table_style="bare",
+            embedded_progress_bar=True,
+            refresh_rate=100,
+            reprint_header_every_n_rows=60,
+        )
         table.add_column("target", width=largest_target_name + 2)  # type: ignore[reportUnknownMemberType]
         table.add_column("dependencies", width=largest_dependency_name + 2)  # type: ignore[reportUnknownMemberType]
         table.add_column("status", width=15)  # type: ignore[reportUnknownMemberType]
@@ -114,6 +99,7 @@ class App:
 
         prog: Generator[str, Any, None] = cast(Generator[str, Any, None], table(bfs_iterator(self.data.G)))
         status_result = StatusResult()
+        total_time = 0.0
         for target in prog:
             deps_string = dependency_strings[target]
             table["target"] = target
@@ -128,8 +114,9 @@ class App:
 
             start_time = time.perf_counter()
             result = check_target_status(self.data, target)
-            total_time = time.perf_counter() - start_time
-            table["time"] = f"{total_time:.2f}s"
+            _time = time.perf_counter() - start_time
+            total_time += _time
+            table["time"] = f"{_time:.2f}s"
 
             if result is None:
                 table["status"] = "🟢 Installed"
@@ -148,15 +135,22 @@ class App:
             table.next_row()
 
         table.close()
+        status_result.total_time = total_time
         return status_result
 
-    def install_missing(self, status_result: StatusResult) -> None:
+    def install_missing(self, status_result: StatusResult) -> StatusResult:
         """
-        Install all missing targets
+        Install all missing targets and attempt to install the ones that failed status check.
         """
-        largest_target_name = max([len(t) for t in status_result.missing])
+        largest_target_name = max([len(t) for t in [*status_result.missing, *status_result.errors]])
 
-        table = ProgressTable(default_column_alignment="left", table_style="bare", embedded_progress_bar=True, refresh_rate=100)
+        table = ProgressTable(
+            default_column_alignment="left",
+            table_style="bare",
+            embedded_progress_bar=True,
+            refresh_rate=100,
+            reprint_header_every_n_rows=60,
+        )
         table.add_column("target", width=largest_target_name + 2)  # type: ignore[reportUnknownMemberType]
         table.add_column("status", width=15)  # type: ignore[reportUnknownMemberType]
         table.add_column("details", width=100)  # type: ignore[reportUnknownMemberType]
@@ -164,6 +158,8 @@ class App:
         missing_packages = set(status_result.missing)
 
         prog: Generator[str, Any, None] = cast(Generator[str, Any, None], table(bfs_iterator(self.data.G)))
+        total_time = 0.0
+        status_result = StatusResult()
         for target in prog:
             # TODO skip the target install if any of its dependencies failed install
             if target not in missing_packages:
@@ -180,21 +176,38 @@ class App:
 
             start_time = time.perf_counter()
             result = install_target(self.data, target)
-            total_time = time.perf_counter() - start_time
-            table["time"] = f"{total_time:.2f}s"
+            _time = time.perf_counter() - start_time
+            total_time += _time
+            table["time"] = f"{_time:.2f}s"
 
             if result is None:
                 table["status"] = "🟢 Installed"
+                status_result.installed.append(target)
             else:
                 if result.returncode == 1:
                     table["status"] = "🟡 Not installed"
                     table["details"] = result.stdout.strip().replace("\n", " ")
+                    status_result.missing.append(target)
                 else:
                     table["status"] = "🔴 Error"
                     table["details"] = result.stderr.strip().replace("\n", " ")
+                    status_result.errors.append(target)
             table.next_row()
 
         table.close()
+
+        print()
+        print()
+        print("Install Report:")
+        print()
+        print(f"🟢 ({len(status_result.installed)}) targets installed")
+        print(f"🟡 ({len(status_result.missing)}) targets couldn't be installed")
+        print(f"🔴 ({len(status_result.errors)}) targets failed because of errors")
+        print()
+        print(f"🕒 Total time: {total_time:.2f}s")
+        print()
+        print()
+        return status_result
 
     def _display(self, it: Dict[str, List[Executable]], method: Literal["setup", "is_setup"]) -> str:
         exec = it[method] if method in it else it["recipe"]

@@ -1,4 +1,4 @@
-from ubuntu:22.04
+from ubuntu:22.04 as base
 
 ##
 ## Fresh install simulation
@@ -6,19 +6,12 @@ from ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 
-
-
-# Create a new user and switch to it
-RUN apt update && apt upgrade -y
-
-# DELETE Just to cache this stuff in docker to save time testing
-RUN apt install -y wget git vim autokey-gtk silversearcher-ag gawk xclip gnome-disk-utility cryptsetup build-essential dconf-editor ripgrep xdotool luarocks cmake libterm-readkey-perl expect ssh curl tar
-
-RUN apt install -y sudo locales keyboard-configuration
-RUN useradd -m myuser -s /bin/bash && \
-    echo "myuser:password" | chpasswd && \
-    adduser myuser sudo
-RUN echo "myuser ALL=(ALL) NOPASSWD:ALL" | tee /etc/sudoers.d/myuser
+RUN --mount=type=cache,target=/var/cache/apt <<EOF
+apt update && apt upgrade -y
+# TODO line, just to cache this stuff in docker to save time testing
+apt install -y wget git vim autokey-gtk silversearcher-ag gawk xclip gnome-disk-utility cryptsetup build-essential dconf-editor ripgrep xdotool luarocks cmake libterm-readkey-perl expect ssh curl tar
+apt install -y sudo locales keyboard-configuration
+EOF
 
 # Set the timezone
 ENV TZ=America/Los_Angeles
@@ -32,44 +25,33 @@ ENV LC_ALL en_US.UTF-8
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ##
-## Real stuff
+## User space
+## This also captures the things that have to be done manually before
+## you can run booty
 ##
+from base
+ENV DEBIAN_FRONTEND=noninteractive
+RUN useradd -m myuser -s /bin/bash && \
+    echo "myuser:password" | chpasswd && \
+    adduser myuser sudo && \
+    echo "myuser ALL=(ALL) NOPASSWD:ALL" | tee /etc/sudoers.d/myuser
+
 USER myuser
-WORKDIR /home/myuser
+WORKDIR /home/myuser/
+
+COPY ./dist/*.whl ./
+RUN cat /etc/sudoers.d/myuser
+
+RUN --mount=type=cache,target=/var/cache/apt sudo apt install -y python3 python3-pip  # MANUAL install pip
+RUN --mount=type=cache,target=/home/myuser/.cache pip install --user ./*.whl  # MANUAL install booty
 
 COPY ./ssh ./.ssh
-COPY ./install.makefile ./
+COPY ./examples/install.booty ./
 
-# make .ssh/* visible to myuser
 RUN sudo chown -R myuser:myuser ./.ssh
 
-
-
-RUN make -k -j 6 -f ./install.makefile
-
-
-RUN cat /etc/passwd
-RUN sudo chsh -s /usr/bin/fish myuser
-RUN cat /etc/passwd
-
-
-CMD ["sudo", "su", "-", "myuser"]
+ENV PATH="/home/myuser/.local/bin:${PATH}"
+RUN sudo chown -R myuser:myuser ./.ssh
+RUN booty -i -y
+CMD ["fish"]

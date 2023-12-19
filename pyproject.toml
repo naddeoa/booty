@@ -1,13 +1,19 @@
 [tool.poetry]
-name = "systemconf"
-version = "0.1.0"
+name = "booty"
+version = "1.0.0"
 description = ""
 authors = ["Anthony Naddeo <anthony.naddeo@gmail.com>"]
 license = "MIT"
 readme = "README.md"
+packages = [{ include = "booty/**/*.py" }, { include = "booty/**/*.lark" }, { include = "booty/**/*.booty" }]
+
+
+[tool.poetry.scripts]
+booty = "booty.cli:cli"
+
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = ">=3.9, <3.13"
 lark = "^1.1.8"
 networkx = "^3.2.1"
 click = "^8.1.7"
@@ -22,6 +28,7 @@ autoflake = "^2.2.1"
 ruff = "^0.1.7"
 pytest = "^7.4.3"
 debugpy = "^1.8.0"
+pyinstaller = "^6.3.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -32,8 +39,6 @@ typeCheckingMode = "strict"
 reportMissingTypeStubs = false
 reportMissingParameterType = false
 reportMissingTypeArgumet = false
-stubPath = "./stubs"
-
 
 [tool.ruff]
 line-length = 140

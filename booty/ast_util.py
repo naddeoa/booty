@@ -5,7 +5,7 @@ from typing import Dict, Iterator, List, Sequence, Union, overload
 from lark import ParseTree, Token, Tree
 
 
-from systemconf.types import Executable, RecipeDefinition, RecipeInvocation, ShellCommand, TargetNames, compact_shell_executables
+from booty.types import Executable, RecipeDefinition, RecipeInvocation, ShellCommand, TargetNames, compact_shell_executables
 
 
 def get_target_names(ast: ParseTree) -> List[str]:

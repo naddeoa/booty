@@ -1,13 +1,13 @@
 from pprint import pprint
-from systemconf.ast_util import get_dependencies, get_executable_index, get_recipe_definition_index
-from systemconf.dependencies import get_dependency_graph
-from systemconf.execute import SystemconfData, check_status_all
+from booty.ast_util import get_dependencies, get_executable_index, get_recipe_definition_index
+from booty.dependencies import get_dependency_graph
+from booty.execute import SystemconfData, check_status_all
 
-from systemconf.parser import parse
-from systemconf.validation import validate
+from booty.parser import parse
+from booty.validation import validate
 
 # # Read the grammer from ./grammar.lark
-# with open("./systemconf/grammar.lark") as f:
+# with open("./booty/grammar.lark") as f:
 #     grammer = f.read()
 #
 # # Create a Lark instance

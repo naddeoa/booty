@@ -1,7 +1,7 @@
 from typing import Any, List
 import networkx as nx
 
-from systemconf.ast_util import DependencyIndex
+from booty.ast_util import DependencyIndex
 
 # This is the root of the graph. Every target that doesn't have any dependencies
 # will depend on this node and the graph search will start from this node.
