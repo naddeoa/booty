@@ -89,8 +89,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.sha }}
-          release_name: Release ${{ github.sha }}
+          tag_name: $(git rev-parse --short=20 ${{ github.sha }})
+          release_name: Release $(git rev-parse --short=20 ${{ github.sha }})
           draft: false
           prerelease: false
           body: |
