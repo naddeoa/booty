@@ -23,7 +23,12 @@ build-binary: $(binary)  # Build the binary variant of booty via pyinstaller.
 
 
 $(binary): $(src)
-	poetry run pyinstaller ./booty/cli.py -n booty -y
+	poetry run pyinstaller ./booty/cli.py -n booty -y \
+		--exclude-module pandas \
+		--exclude-module numpy \
+		--exclude-module pytest \
+		--exclude-module pygments \
+		--exclude-module multiprocessing.util
 
 ##
 ## Run targets
