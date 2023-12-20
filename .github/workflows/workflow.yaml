@@ -41,7 +41,7 @@ jobs:
         run: poetry install
 
       - name: Building
-        run: make build build-binary
+        run: make build build-binary-linux
 
       - name: Check types
         run: make lint
@@ -62,7 +62,6 @@ jobs:
           echo "${{ secrets.DOCKER_PRIVATE_SSH_KEY }}" > ./ssh/id_rsa
           echo "${{ secrets.DOCKER_KNOWN_HOSTS }}" > ./ssh/known_hosts
 
-
       - name: Build main Docker container
         uses: docker/build-push-action@v2
         with:
@@ -82,6 +81,59 @@ jobs:
     if: ${{ github.event_name == 'push' }}
     needs: [build, setup]
     runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.save_upload_url.outputs.upload_url }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.setup.outputs.short_sha}}
+          release_name: Release ${{ needs.setup.outputs.short_sha}}
+          draft: false
+          prerelease: false
+          body: |
+            Install with pip:
+
+            ```
+            pip install booty-cli
+            ```
+
+            Or download a binary below
+      - name: Save upload url 
+        shell: bash
+        id: save_upload_url 
+        run: |
+          URL=${{ steps.create_release.outputs.upload_url }}
+          echo "Setting output to $URL"
+          echo "upload_url=$URL" >> "$GITHUB_OUTPUT"
+
+  assets:
+    name: Asset upload
+    if: ${{ github.event_name == 'push' }}
+    needs: [release]
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            variant: linux
+            BINARY_NAME: booty_linux_x86_64
+            BUILD_BINARY_COMMAND: "make build-binary-linux"
+          - os: macos-latest
+            variant: mac_x86_64
+            BINARY_NAME: booty_mac_x86_64
+            BUILD_BINARY_COMMAND: "make build-binary-mac"
+          - os: macos-latest
+            variant: mac_arm64
+            BINARY_NAME: booty_mac_arm64
+            BUILD_BINARY_COMMAND: "make build-binary-mac-arm"
 
     steps:
       - uses: actions/checkout@v2
@@ -103,26 +155,7 @@ jobs:
         run: make build
 
       - name: Generate exe
-        run: make build-binary
-
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ needs.setup.outputs.short_sha}}
-          release_name: Release ${{ needs.setup.outputs.short_sha}}
-          draft: false
-          prerelease: false
-          body: |
-            Install with pip:
-
-            ```
-            pip install booty-cli
-            ```
-
-            Or download a binary below
+        run: ${{ matrix.BUILD_BINARY_COMMAND }}
 
       - name: Upload Release Asset
         id: upload-release-asset
@@ -130,12 +163,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} 
-          asset_path: ./dist/booty/booty
-          asset_name: booty
-          asset_content_type: application/bin
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: ./dist/${{ matrix.BINARY_NAME }}/${{ matrix.BINARY_NAME }}
+          asset_name: ${{ matrix.BINARY_NAME }}
+          asset_content_type: application/octet-stream
 
       - name: PyPi Publish
+        if: matrix.os == 'ubuntu-latest'
         shell: bash
         run: poetry publish -u __token__ -p ${{ secrets.PYPI_KEY }}
-
