@@ -190,6 +190,8 @@ class App:
                     table["status"] = "🔴 Error"
                     table["details"] = result.stderr.strip().replace("\n", " ")
                     status_result.errors.append(target)
+                    print(result.stdout)  # TODO delete
+                    print(result.stderr)
             table.next_row()
 
         table.close()
