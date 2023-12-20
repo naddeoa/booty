@@ -7,6 +7,20 @@ on:
     branches: ["*"]
 
 jobs:
+  setup:
+    name: Setup
+    runs-on: ubuntu-latest
+    outputs:
+      short_sha: ${{ steps.short_sha_setup.outputs.short_sha }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Save short sha
+        shell: bash
+        id: short_sha_setup
+        run: |
+          SHA=$(git rev-parse --short=20 ${{ github.sha }})
+          echo "short_sha=$SHA" >> "$GITHUB_OUTPUT"
+
   build:
     runs-on: ubuntu-latest
 
@@ -66,7 +80,7 @@ jobs:
   release:
     name: Release
     if: ${{ github.event_name == 'push' }}
-    needs: [build]
+    needs: [build, setup]
     runs-on: ubuntu-latest
 
     steps:
@@ -85,6 +99,9 @@ jobs:
       - name: Install python dependencies
         run: poetry install
 
+      - name: Generate wheels
+        run: make build
+
       - name: Generate exe
         run: make build-binary
 
@@ -94,8 +111,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: $(git rev-parse --short=20 ${{ github.sha }})
-          release_name: Release $(git rev-parse --short=20 ${{ github.sha }})
+          tag_name: ${{ needs.setup.outputs.short_sha}}
+          release_name: Release ${{ needs.setup.outputs.short_sha}}
           draft: false
           prerelease: false
           body: |
@@ -107,10 +124,6 @@ jobs:
 
             Or download a binary below
 
-      - name: PyPi Publish
-        shell: bash
-        run: poetry publish -u __token__ -p ${{ secrets.PYPI_KEY }}
-
       - name: Upload Release Asset
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
@@ -121,3 +134,8 @@ jobs:
           asset_path: ./dist/booty/booty
           asset_name: booty
           asset_content_type: application/bin
+
+      - name: PyPi Publish
+        shell: bash
+        run: poetry publish -u __token__ -p ${{ secrets.PYPI_KEY }}
+

@@ -10,13 +10,16 @@ all: build $(binary)
 ## Build targets
 ##
 
-build:
+build:  # Build dist wheels
 	poetry build
 
-build-docker:
+build-docker:  # Build the test docker image.
 	docker build . -t $(project)
 
-build-binary: $(binary)
+build-docker-base:  ## Build the base docker image for integ testing.
+	docker build . -f Dockerfile.base -t naddeoa/booty:ubuntu22.04
+
+build-binary: $(binary)  # Build the binary variant of booty via pyinstaller.
 
 
 $(binary): $(src)
@@ -26,36 +29,42 @@ $(binary): $(src)
 ## Run targets
 ##
 
-run:
+run:  ## Run the project python diriectly
 	poetry run python -m $(project).cli
 
-run-bin:
+run-bin:  ## Run the generated binary.
 	$(binary)
 
-run-docker:
+run-docker:  ## Run the test docker image from build-docker.
 	docker run --rm -it $(project)
 
-debug: ## Run the dev server in debug mode
+debug: ## Run booty in debug mode via debugpy.
 	poetry run python -m debugpy --listen localhost:5678 --wait-for-client -m $(project).cli
 
 test:
-	docker build . -t $(project)
+	poetry run pytest
 
 ##
 ## Pre commit targets
 ##
 
-format:
+format:  ## Run the ruff formatter.
 	poetry run ruff format --check
 
-lint:
+lint:  ## Run the ruff linter.
 	poetry run ruff check
 
-format-fix:
+format-fix:  ## Run the ruff formatter.
 	poetry run ruff format
 
-lint-fix:
+lint-fix:  ## Run the ruff linter.
 	poetry run ruff check --fix
 
-fix: format-fix lint-fix
+fix: format-fix lint-fix  ## Run the ruff formatter and linter.
+
+help: ## Show this help message.
+	@echo 'usage: make [target] ...'
+	@echo
+	@echo 'targets:'
+	@egrep '^(.+)\:(.*) ##\ (.+)' ${MAKEFILE_LIST} | sed -s 's/:\(.*\)##/: ##/' | column -t -c 2 -s ':#'
 

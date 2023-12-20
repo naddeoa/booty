@@ -27,6 +27,7 @@
 - Update the exection to show the current line from stdout on the row details. Going to be a little big to refactor
 - Get docker build running in CI. Need to specify ssh private keys
 - Update pypi metadata
+- Write out all stderr/stdout to a log file so you can get the errors after
 
 - Add support for importing recipes
 - Make a treesitter integration
