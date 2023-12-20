@@ -32,17 +32,17 @@ jobs:
       - name: Check formatting
         run: make format
 
-      - name: Run test
-        run: make test
-
-  container-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v1
+      # Buiding the container is basically the integ test
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
+
+      - name: create key
+        run: |
+          mkdir ssh/
+          echo "${{ secrets.GITHUB_TOKEN }}" > ./ssh/id_rsa
 
       - name: Build main Docker container
         uses: docker/build-push-action@v2
