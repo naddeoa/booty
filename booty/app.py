@@ -2,12 +2,13 @@ from dataclasses import dataclass, field
 import time
 from typing import Any, Dict, Generator, List, Literal, cast
 
-from booty.ast_util import get_dependencies, get_executable_index, get_recipe_definition_index, get_zero_dependency_targets
+from booty.ast_util import get_dependencies, get_executable_index, get_recipe_definition_index
 from booty.dependencies import bfs_iterator, get_dependency_graph
 from booty.execute import SystemconfData, check_target_status, install_target
-from booty.parser import get_lang_path, parse
+from booty.parser import parse
 from booty.types import Executable, RecipeInvocation
 from booty.validation import validate
+from booty.lang.stdlib import stdlib
 
 from progress_table import ProgressTable
 
@@ -35,9 +36,6 @@ class App:
         """
         with open(self.config_path) as f:
             config = f.read()
-
-        with open(get_lang_path("stdlib.booty")) as f2:
-            stdlib = f2.read()
 
         ast = parse(config)
         stdlib_ast = parse(stdlib)
@@ -95,7 +93,7 @@ class App:
         table.add_column("dependencies", width=largest_dependency_name + 2)  # type: ignore[reportUnknownMemberType]
         table.add_column("status", width=15)  # type: ignore[reportUnknownMemberType]
         table.add_column("details", width=70)  # type: ignore[reportUnknownMemberType]
-        table.add_column("time", width=15)  # type: ignore[reportUnknownMemberType]
+        table.add_column("time", alignment="right", width=15)  # type: ignore[reportUnknownMemberType]
 
         prog: Generator[str, Any, None] = cast(Generator[str, Any, None], table(bfs_iterator(self.data.G)))
         status_result = StatusResult()
@@ -154,7 +152,7 @@ class App:
         table.add_column("target", width=largest_target_name + 2)  # type: ignore[reportUnknownMemberType]
         table.add_column("status", width=15)  # type: ignore[reportUnknownMemberType]
         table.add_column("details", width=100)  # type: ignore[reportUnknownMemberType]
-        table.add_column("time", width=15)  # type: ignore[reportUnknownMemberType]
+        table.add_column("time", alignment="right", width=15)  # type: ignore[reportUnknownMemberType]
         missing_packages = set(status_result.missing)
 
         prog: Generator[str, Any, None] = cast(Generator[str, Any, None], table(bfs_iterator(self.data.G)))
