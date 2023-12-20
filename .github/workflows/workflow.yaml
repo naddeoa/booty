@@ -26,6 +26,9 @@ jobs:
       - name: Install python dependencies
         run: poetry install
 
+      - name: Building
+        run: make build build-binary
+
       - name: Check types
         run: make lint
 
@@ -39,10 +42,12 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
-      - name: create key
+      - name: Import SSH Config
         run: |
-          mkdir ssh/
-          echo "${{ secrets.GITHUB_TOKEN }}" > ./ssh/id_rsa
+          mkdir ./ssh/
+          echo "${{ secrets.DOCKER_PRIVATE_SSH_KEY }}" > ./ssh/id_rsa
+          echo "${{ secrets.DOCKER_KNOWN_HOSTS }}" > ./ssh/known_hosts
+
 
       - name: Build main Docker container
         uses: docker/build-push-action@v2

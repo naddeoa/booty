@@ -15,7 +15,9 @@ notes.git: git(naddeo@do.naddeo.org:~/git/notes, ~/notes)
 ssh_conf -> essentials
 ssh_conf:
     setup: ssh-keygen
-    is_setup: test -f ~/.ssh/id_rsa.pub
+    is_setup: 
+        test -f ~/.ssh/id_rsa.pub
+        test -f ~/.ssh/id_rsa
 
 ## Terminal stuff
 
