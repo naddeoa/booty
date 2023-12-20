@@ -20,7 +20,7 @@ build-binary: $(binary)
 
 
 $(binary): $(src)
-	poetry run pyinstaller ./booty/cli.py -n booty
+	poetry run pyinstaller ./booty/cli.py -n booty -y
 
 ##
 ## Run targets
