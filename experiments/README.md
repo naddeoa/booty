@@ -26,6 +26,7 @@
 - Don't attempt to install targets if their dependencies can't be installed
 - Update the exection to show the current line from stdout on the row details. Going to be a little big to refactor
 - Get docker build running in CI. Need to specify ssh private keys
+- Update pypi metadata
 
 - Add support for importing recipes
 - Make a treesitter integration

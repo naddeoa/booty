@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "booty"
+name = "booty-cli"
 version = "1.0.0"
 description = ""
 authors = ["Anthony Naddeo <anthony.naddeo@gmail.com>"]
