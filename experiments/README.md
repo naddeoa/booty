@@ -21,9 +21,15 @@
 
 
 # TODO
+- Fill out README
+- Reorient the cli text to say "setting up" in place of "installing"
 - Don't attempt to install targets if their dependencies can't be installed
 - Update the exection to show the current line from stdout on the row details. Going to be a little big to refactor
-- packae it up as an executable cli in pip
-- make my real install.sysc
-- Make a syntax/treesitter integration
+- Get docker build running in CI. Need to specify ssh private keys
+
 - Add support for importing recipes
+- Make a treesitter integration
+
+- DONE Make a syntax integration
+- DONE packae it up as an executable cli in pip
+- DONE make my real install.sysc

@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    branches: ["*"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - uses: actions/setup-python@v4
+        name: Install Python
+        with:
+          python-version: "3.10.8"
+
+      - uses: Gr1N/setup-poetry@v8
+        name: Install poetry
+        with:
+          poetry-version: 1.7.1
+
+      - name: Install python dependencies
+        run: poetry install
+
+      - name: Check types
+        run: make lint
+
+      - name: Check formatting
+        run: make format
+
+      - name: Run test
+        run: make test
+
+  container-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Build main Docker container
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          load: true
+          push: false
+          tags: booty/test${{ github.sha }}
+
+      # The build host is running out of disk space
+      - name: Delete docker images and cache
+        shell: bash
+        run: docker system prune -a -f

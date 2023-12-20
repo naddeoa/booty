@@ -5,3 +5,5 @@ __pycache__
 ssh/
 *.whl
 dist/
+build/
+*.spec

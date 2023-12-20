@@ -1,6 +1,7 @@
 from typing import Optional
 from lark import Lark, ParseTree
 from pathlib import Path
+from booty.lang.grammar import grammar
 
 __parser: Optional[Lark] = None
 
@@ -14,8 +15,6 @@ def get_lang_path(file: str) -> Path:
 def parse(text: str) -> ParseTree:
     global __parser
     if __parser is None:
-        with open(get_lang_path("grammar.lark")) as f:
-            grammer = f.read()
-        __parser = Lark(grammer, debug=True)
+        __parser = Lark(grammar, debug=True)
 
     return __parser.parse(text)

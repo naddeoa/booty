@@ -1,0 +1,30 @@
+from ubuntu:22.04
+
+##
+## Fresh install simulation
+##
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN --mount=type=cache,target=/var/cache/apt <<EOF
+apt update && apt upgrade -y
+apt install -y sudo locales keyboard-configuration
+EOF
+
+# Set the timezone
+ENV TZ=America/Los_Angeles
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+# Set the locale
+RUN locale-gen en_US.UTF-8  
+ENV LANG en_US.UTF-8  
+ENV LANGUAGE en_US:en  
+ENV LC_ALL en_US.UTF-8  
+
+RUN useradd -m myuser -s /bin/bash && \
+    echo "myuser:password" | chpasswd && \
+    adduser myuser sudo && \
+    echo "myuser ALL=(ALL) NOPASSWD:ALL" | tee /etc/sudoers.d/myuser
+
+USER myuser
+WORKDIR /home/myuser/
+

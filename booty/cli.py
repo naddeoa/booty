@@ -1,5 +1,6 @@
 import click
 import pathlib
+import sys
 
 from booty.app import App
 
@@ -13,7 +14,7 @@ def cli(config: str, yes: bool, status: bool = True, install: bool = False):
     # Make sure config exists
     if not pathlib.Path(config).exists():
         click.echo(f"Config file {config} does not exist.")
-        exit(1)
+        sys.exit(1)
 
     if not install and not status:
         install = True
@@ -33,12 +34,12 @@ def cli(config: str, yes: bool, status: bool = True, install: bool = False):
             if install_result.errors:
                 # Don't consider `missing` to be an error. Some status checks may require logging in/out.
                 click.echo("There were errors. See above.")
-                exit(1)
+                sys.exit(1)
 
     elif status:
         if app.status().errors:
             click.echo("There were errors. See above.")
-            exit(1)
+            sys.exit(1)
 
 
 if __name__ == "__main__":

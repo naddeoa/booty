@@ -1,3 +1,4 @@
+grammar = r"""
 %import common.SH_COMMENT
 %import common.WS_INLINE
 %ignore SH_COMMENT
@@ -49,3 +50,4 @@ RECIPE_NAME: /[a-zA-Z0-9_\.-]+/
 # Note the leadering space before implements. It has to be indented somewhat.
 IMPLEMENTS_NAME: /[ \t]+[a-zA-Z0-9_\.-]+/
 _NEW_LINE: /\n/
+"""

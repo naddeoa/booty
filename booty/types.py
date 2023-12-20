@@ -25,7 +25,7 @@ Executable = Union[RecipeInvocation, ShellCommand]
 @dataclass
 class TargetDefinition:
     target_name: str
-    definition : Union[Dict[str, List[Executable]], RecipeInvocation]
+    definition: Union[Dict[str, List[Executable]], RecipeInvocation]
 
     # TODO put a bunch of stuff in here that I've been putting into types.py, execute.py, and app.py
 

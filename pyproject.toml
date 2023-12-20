@@ -5,7 +5,7 @@ description = ""
 authors = ["Anthony Naddeo <anthony.naddeo@gmail.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{ include = "booty/**/*.py" }, { include = "booty/**/*.lark" }, { include = "booty/**/*.booty" }]
+packages = [{ include = "booty/**/*.py" }]
 
 
 [tool.poetry.scripts]

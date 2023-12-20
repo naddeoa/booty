@@ -1,3 +1,4 @@
+stdlib = """
 recipe apt(packages):
     setup: sudo apt-get install -y $((packages))
     is_setup:
@@ -33,3 +34,4 @@ recipe cp(src dst):
         cp -r $((src)) $((dst))
     is_setup: test -e $((dst))
 
+"""
