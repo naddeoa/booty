@@ -126,11 +126,11 @@ jobs:
             variant: linux
             BINARY_NAME: booty_linux_x86_64
             BUILD_BINARY_COMMAND: "make build-binary-linux"
-          - os: macos-latest
+          - os: macos-12
             variant: mac_x86_64
             BINARY_NAME: booty_mac_x86_64
             BUILD_BINARY_COMMAND: "make build-binary-mac"
-          - os: macos-latest
+          - os: macos-13
             variant: mac_arm64
             BINARY_NAME: booty_mac_arm64
             BUILD_BINARY_COMMAND: "make build-binary-mac-arm"
