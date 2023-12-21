@@ -6,7 +6,8 @@ and install SDKs for various programming languages, without you having to downlo
 order.
 
 You model your setup process as Targets and declare which ones depend on which ones, then execute `booty` to set everything up, if
-everything isn't already setup.
+everything isn't already setup. Your install.booty file will specify various `setup` and `is_setup` methods that `booty` uses to set your
+system up, and to test if everything was actually setup.
 
 <!-- <p align="center"><img src="https://raw.githubusercontent.com/naddeoa/booty/master/static/booty-status.jpg"/></p> </br> -->
 
@@ -266,7 +267,7 @@ the same name.
 ## Why wasn't make good enough?
 
 You can check the [experiments](https://github.com/naddeoa/booty/blob/master/experiments/install.makefile) folder to see what it looks like
-to implement the [example booty](https://github.com/naddeoa/booty/blob/master/examples/install.boot) file in make. It's a fair bit longer
+to implement the [example booty](https://github.com/naddeoa/booty/blob/master/examples/install.booty) file in make. It's a fair bit longer
 and clunkier for a few reasons:
 
 - Every target in make is designed to be an actual file. This great for building things but it means that you end up marking a lot of
