@@ -13,7 +13,7 @@ from booty.app import App
 def cli(config: str, yes: bool, status: bool = True, install: bool = False):
     # Make sure config exists
     if not pathlib.Path(config).exists():
-        click.echo(f"Config file {config} does not exist.")
+        click.echo(f"Config file {config} does not exist. Use -c to specify the location of an install.booty file.")
         sys.exit(1)
 
     if not install and not status:
