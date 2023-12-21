@@ -15,7 +15,7 @@ notes.git: git(naddeo@do.naddeo.org:~/git/notes, ~/notes)
 ssh_conf -> essentials
 ssh_conf:
     setup: ssh-keygen
-    is_setup: 
+    is_setup:
         test -f ~/.ssh/id_rsa.pub
         test -f ~/.ssh/id_rsa
 
@@ -99,7 +99,7 @@ pipx -> essentials terminal
 pipx: apt(pipx)
 
 pyenv -> essentials terminal pipx omf_config 
-pyenv <- python3.7 python3.8 python3.9 python3.10
+pyenv <- python3.7 python3.8 python3.9 python3.10 python3.11
 pyenv:
     setup: 
         apt(build-essential libssl-dev zlib1g-dev libncurses5-dev libncursesw5-dev
@@ -112,6 +112,7 @@ python3.7: pyenv(3.7)
 python3.8: pyenv(3.8)
 python3.9: pyenv(3.9)
 python3.10: pyenv(3.10)
+python3.11: pyenv(3.11.6)
 
 poetry -> pipx
 poetry: pipx(poetry)

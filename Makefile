@@ -48,6 +48,16 @@ build-binary-mac-arm:  # Build the binary variant of booty via pyinstaller for a
 		--exclude-module pygments \
 		--onefile \
 		--exclude-module multiprocessing.util
+
+build-binary-mac-universal:  # Build the binary variant of booty via pyinstaller for arm mac.
+	poetry run pyinstaller ./booty/cli.py -n booty_mac_universal -y \
+		--target-arch universal2 \
+		--exclude-module pandas \
+		--exclude-module numpy \
+		--exclude-module pytest \
+		--exclude-module pygments \
+		--onefile \
+		--exclude-module multiprocessing.util
 ##
 ## Run targets
 ##
