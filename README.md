@@ -1,4 +1,3 @@
-
 <p align="center"><img src="https://raw.githubusercontent.com/naddeoa/booty/master/static/booty-logo-bg-sm.png"/></p> </br>
 
 Booty is a language and command line utility for bootstrapping the setup of peronal OS installs. It's goal is to execute all of the things
@@ -10,7 +9,6 @@ You model your setup process as Targets and declare which ones depend on which o
 everything isn't alrady setup.
 
 <p align="center"><img src="https://raw.githubusercontent.com/naddeoa/booty/master/static/booty-status.jpg"/></p> </br>
-
 
 # Install
 
@@ -79,7 +77,6 @@ vim.api.nvim_create_autocmd({"BufRead", "BufNewFile"}, {
 autocmd BufRead,BufNewFile *.booty set filetype=booty
 ```
 
-
 # Booty Language
 
 For full examples, check out the [examples](https://github.com/naddeoa/booty/tree/master/examples) folder in github.
@@ -131,7 +128,7 @@ pyenv:
 
 # Can also be multiline and invoke different commands/recipes.
 pyenv:
-    setup: 
+    setup:
         apt(python3)
         curl https://pyenv.run | bash
     is_setup: test -e ~/.pyenv/bin/pyenv
@@ -180,13 +177,13 @@ recipe git_shallow(repo dist):
     is_setup: test -d $((dist))
 
 recipe ln(src dst):
-    setup: 
+    setup:
         mkdir -p $(dirname $((dst)))
         ln -fs $((src)) $((dst))
     is_setup: test -L $((dst)) && test -e $((dst))
 
 recipe cp(src dst):
-    setup: 
+    setup:
         mkdir -p $(dirname $((dst)))
         cp -r $((src)) $((dst))
     is_setup: test -e $((dst))
@@ -195,5 +192,33 @@ recipe cp(src dst):
 Any of these can be referenced from any booty.install file, and you can redifine them locally if you want different recipe logic that uses
 the same name.
 
+# FAQ
 
+## Why wasn't make good enough?
+
+You can check the [experiments](https://github.com/naddeoa/booty/blob/master/experiments/install.makefile) folder to see what it looks like
+to implement the [example booty](https://github.com/naddeoa/booty/blob/master/examples/install.boot) file in make. It's a fair bit longer
+and clunkier for a few reasons:
+
+- Every target in make is designed to be an actual file. This great for building things but it means that you end up marking a lot of
+  targets as `.PHONY` if they don't result in differences on the file system.
+- Implementing the `--status` flag from booty is very, very ugly. You'll just manually define two modes of each target and hard code a phony
+  target that runs them all, with no particular attention paid to the output.
+- Same goes for running the setup code -- manually enumerating all targets as a phony target's dependency gets you the `--install` flag in
+  booty.
+- Output in general isn't very digestible.
+- Each line of a target is executed in a new shell. Good for sandboxing commands but it gets very ugly when you want to do something like an
+  `if` statement.
+
+There are a lot of good things about make though. My favorite relevant parts are:
+
+- Easy, independent dependency specification
+- Plain old shell for each target definition.
+
+# TODO
+
+Some features that might be useful.
+
+- Global variables. This would probably look just like make variables.
+- Block child target installs if a dependency fails first. It will proceed today and most likely fail for that target anyway.
 
