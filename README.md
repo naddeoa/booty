@@ -209,7 +209,7 @@ Dependencies determine the execution order at setup time. The way that you decla
 syntax (`->`) or the `depended upon` syntax (`<-`). This is allowed because its sometimes easier to manage a bunch of dependencies in a
 single line when they're logically related. Its personal preference for how you maintain your install.booty file.
 
-```make
+```haskell
 # the target `essentials` is depended upon by foo and bar.
 essentials <- foo bar
 
