@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "booty-cli"
-version = "1.0.3.dev0"
+version = "1.0.3.dev1"
 description = ""
 authors = ["Anthony Naddeo <anthony.naddeo@gmail.com>"]
 license = "MIT"

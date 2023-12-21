@@ -26,15 +26,17 @@ build-binary-linux:  # Build the binary variant of booty via pyinstaller for lin
 		--exclude-module numpy \
 		--exclude-module pytest \
 		--exclude-module pygments \
+		--onefile \
 		--exclude-module multiprocessing.util
 
 build-binary-mac:  # Build the binary variant of booty via pyinstaller for mac.
 	poetry run pyinstaller ./booty/cli.py -n booty_mac_x86_64 -y \
-		--target-arch x86_64
+		--target-arch x86_64 \
 		--exclude-module pandas \
 		--exclude-module numpy \
 		--exclude-module pytest \
 		--exclude-module pygments \
+		--onefile \
 		--exclude-module multiprocessing.util
 
 build-binary-mac-arm:  # Build the binary variant of booty via pyinstaller for arm mac.
@@ -44,6 +46,7 @@ build-binary-mac-arm:  # Build the binary variant of booty via pyinstaller for a
 		--exclude-module numpy \
 		--exclude-module pytest \
 		--exclude-module pygments \
+		--onefile \
 		--exclude-module multiprocessing.util
 ##
 ## Run targets
