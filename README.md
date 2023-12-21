@@ -1,12 +1,12 @@
 <p align="center"><img src="https://raw.githubusercontent.com/naddeoa/booty/master/static/booty-logo-bg-sm.png"/></p>
 
-Booty is a language and command line utility for bootstrapping the setup of peronal OS installs. Its goal is to execute all of the things
-that you do after your first boot, like install packges through your package manager, configure your shell, setup your terminal tools/IDE,
+Booty is a language and command line utility for bootstrapping the setup of personal OS installs. Its goal is to execute all of the things
+that you do after your first boot, like install packages through your package manager, configure your shell, setup your terminal tools/IDE,
 and install SDKs for various programming languages, without you having to download everything manually and run various scripts in the right
 order.
 
 You model your setup process as Targets and declare which ones depend on which ones, then execute `booty` to set everything up, if
-everything isn't alrady setup.
+everything isn't already setup.
 
 <!-- <p align="center"><img src="https://raw.githubusercontent.com/naddeoa/booty/master/static/booty-status.jpg"/></p> </br> -->
 
@@ -38,7 +38,7 @@ curl https://raw.githubusercontent.com/naddeoa/booty/master/scripts/booty-downlo
 
 You can run `booty --help` to see all of the options. You'll generally cd to a directory with an `install.booty` file and run `booty`.
 You'll see a table that shows the status of all of your targets and you'll be prompted to install all of the missing ones, which will
-display in real time as a second table with a row for each target getting setup.
+display in real-time as a second table with a row for each target getting setup.
 
 ```bash
 Usage: booty_linux_x86_64 [OPTIONS]
@@ -179,7 +179,7 @@ recipe apt(packages):
 ## Targets
 
 Targets are the main piece of a booty file. They invoke a recipe to accomplish their goal. This is a target named `essentials` that invokes
-the `apt`recipe, passing it the paramter `wget git vim autokey-gtk silversearcher-ag gawk xclip`.
+the `apt`recipe, passing it the parameter `wget git vim autokey-gtk silversearcher-ag gawk xclip`.
 
 ```make
 essentials: apt(wget git vim autokey-gtk silversearcher-ag gawk xclip)
