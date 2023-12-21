@@ -1,0 +1,16 @@
+from naddeoa/booty:ubuntu22.04
+
+RUN sudo apt-get install -y curl # Just like IRL, install curl first
+RUN curl https://raw.githubusercontent.com/naddeoa/booty/master/scripts/booty-download-linux.sh | bash # MANUAL install booty without pip
+
+# Copy my ssh keys in so I can clone my private repos
+COPY ./ssh ./.ssh
+RUN sudo chown -R myuser:myuser ./.ssh
+RUN chmod 600 .ssh/id_rsa
+
+COPY ./examples/install.booty ./
+
+# This would be on my path IRL
+ENV PATH="/home/myuser/.local/bin:${PATH}"
+
+CMD ["bash"]
