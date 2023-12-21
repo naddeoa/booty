@@ -1,5 +1,7 @@
 
-<img src="https://raw.githubusercontent.com/naddeoa/booty/master/static/booty-logo-bg.png"/><p align="center"></br>
+<p align="center"><img src="https://raw.githubusercontent.com/naddeoa/booty/master/static/booty-logo-bg-sm.png"/></p>
+
+</br>
 
 
 # Install
