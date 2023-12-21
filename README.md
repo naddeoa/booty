@@ -39,7 +39,7 @@ curl https://raw.githubusercontent.com/naddeoa/booty/master/scripts/booty-downlo
 A simple syntax definition is available for vim/nvim. This can be placed in `~/.config/nvim/syntax/booty.vim`, for example. This will be
 updated with a dedicated repo soon.
 
-```syntax
+```vim
 syntax clear
 
 syntax region bootyArgs start=/(/ end=/)/ contains=@Spell
@@ -62,7 +62,21 @@ highlight link bootyImplementsName Function
 highlight link bootyRecipeCall Funciton
 highlight link bootyArgs String
 highlight link bootyParams Type
+```
 
+Along with a file type snippet.
+
+```lua
+-- neovim init.lua
+vim.api.nvim_create_autocmd({"BufRead", "BufNewFile"}, {
+    pattern = "*.booty",
+    command = "set filetype=booty",
+})
+```
+
+```vim
+" vim .vimrc
+autocmd BufRead,BufNewFile *.booty set filetype=booty
 ```
 
 
@@ -84,7 +98,7 @@ This is a recipe named `apt` who's `setup` executes the shell command `sudo apt-
 substituted by the value of the paraemter `packages` when it's run. Its `is_setup` executes a multiline shell statement. The shell is
 invoked via `bash -c ...`.
 
-```booty
+```make
 recipe apt(packages):
     setup: sudo apt-get install -y $((packages))
     is_setup:
@@ -101,7 +115,7 @@ recipe apt(packages):
 Targets are the main piece of a booty file. They invoke a recipe to accomplish their goal. This is a target named `essentials` that invokes
 the `apt`recipe, passing it the paramter `wget git vim autokey-gtk silversearcher-ag gawk xclip`.
 
-```booty
+```make
 essentials: apt(wget git vim autokey-gtk silversearcher-ag gawk xclip)
 ```
 
@@ -110,7 +124,7 @@ essentials: apt(wget git vim autokey-gtk silversearcher-ag gawk xclip)
 Custom Targets are similar to recipes, but they're defined inline. You would use this for something that didn't require any code shared
 between other recipes. The body of a Custom Target follows the same rules as a Recipe.
 
-```booty
+```make
 pyenv:
     setup: curl https://pyenv.run | bash
     is_setup: test -e ~/.pyenv/bin/pyenv
@@ -129,7 +143,7 @@ Dependencies determine the execution order at setup time. The way that you decla
 syntax (`->`) or the `depended upon` syntax (`<-`). This is allowed because its sometimes easier to manage a bunch of dependencies in a
 single line when they're logically related. Its personal preference for how you maintain your install.booty file.
 
-```booty
+```make
 # the target `essentials` is depended upon by foo and bar.
 essentials <- foo bar
 
@@ -141,7 +155,7 @@ baz -> bar
 
 Certain recipes are included in booty by default. These include the following.
 
-```booty
+```make
 recipe apt(packages):
     setup: sudo apt-get install -y $((packages))
     is_setup:
@@ -178,7 +192,8 @@ recipe cp(src dst):
     is_setup: test -e $((dst))
 ```
 
-Any of these can be referenced from any booty.install file.
+Any of these can be referenced from any booty.install file, and you can redifine them locally if you want different recipe logic that uses
+the same name.
 
 
 
