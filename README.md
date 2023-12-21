@@ -51,6 +51,56 @@ Options:
   --help             Show this message and exit.
 ```
 
+# Testing/Dry Runs
+
+Setting your system up is inherently side effect prone. Every command from `apt` to `pip` is probably doing something to some part of your
+system that you didn't realize. If you want to execute your `install.booty` file without worrying about what might go wrong before you use
+it for real then the best way to do that is via Docker (which is how this repo does "integration" testing).
+
+There is a [public docker image (naddeoa/booty:ubuntu22.04)](https://hub.docker.com/repository/docker/naddeoa/booty/general) that you can
+base your own Dockerfile on that mimics what a fresh install looks like for Ubuntu 22.04 users. You can create an image that does roughly
+what you would do to your system to get the `booty` command working, and then run it and make sure everything works as expected. The image's
+user is named `myuser` and its password is `password`. You can see how its created in
+[Dockerfile.base](https://github.com/naddeoa/booty/blob/master/Dockerfile.base).
+
+This Dockerfile is what I use to test my own installs.
+
+```Dockerfile
+from naddeoa/booty:ubuntu22.04
+
+RUN curl https://raw.githubusercontent.com/naddeoa/booty/master/scripts/booty-download-linux.sh | bash # MANUAL install bin directly without pip
+
+# Copy my ssh keys in so I can clone my private repos
+COPY ./ssh ./.ssh
+RUN sudo chown -R myuser:myuser ./.ssh
+RUN chmod 600 .ssh/id_rsa
+
+COPY ./examples/install.booty ./
+
+# This would be on my path IRL
+ENV PATH="/home/myuser/.local/bin:${PATH}"
+RUN booty -i -y
+
+CMD ["bash"]
+```
+
+Then you build and run the image, and execute booty.
+
+```bash
+# Build the image
+docker build . -t my-booty-test
+
+# Run it
+docker run --rm -it --entrypoint bash my-booty-test
+
+## Inside the image now
+./booty_linux_x86_64 -y
+```
+
+You can't test everything here but you can get pretty far. One thing I can't test here, for example, is `chsh` because that requires logging
+out, but I gets me confident enough to use it on a fresh install and know I won't mess things up. In practice, you do this sort of a test
+infrequently, when you initially create your `install.booty` file or when you make big changes to it.
+
 # Syntax Support
 
 A simple syntax definition is available for vim/nvim. This can be placed in `~/.config/nvim/syntax/booty.vim`, for example. This will be
