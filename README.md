@@ -1,6 +1,6 @@
-<p align="center"><img src="https://raw.githubusercontent.com/naddeoa/booty/master/static/booty-logo-bg-sm.png"/></p> </br>
+<p align="center"><img src="https://raw.githubusercontent.com/naddeoa/booty/master/static/booty-logo-bg-sm.png"/></p>
 
-Booty is a language and command line utility for bootstrapping the setup of peronal OS installs. It's goal is to execute all of the things
+Booty is a language and command line utility for bootstrapping the setup of peronal OS installs. Its goal is to execute all of the things
 that you do after your first boot, like install packges through your package manager, configure your shell, setup your terminal tools/IDE,
 and install SDKs for various programming languages, without you having to download everything manually and run various scripts in the right
 order.
@@ -8,7 +8,9 @@ order.
 You model your setup process as Targets and declare which ones depend on which ones, then execute `booty` to set everything up, if
 everything isn't alrady setup.
 
-<p align="center"><img src="https://raw.githubusercontent.com/naddeoa/booty/master/static/booty-status.jpg"/></p> </br>
+<!-- <p align="center"><img src="https://raw.githubusercontent.com/naddeoa/booty/master/static/booty-status.jpg"/></p> </br> -->
+
+<a href="https://asciinema.org/a/7Uv7wuu4AxX96mBvKIYTtefDU" target="_blank"><img src="https://asciinema.org/a/7Uv7wuu4AxX96mBvKIYTtefDU.svg" /></a>
 
 # Install
 
@@ -32,7 +34,24 @@ curl https://raw.githubusercontent.com/naddeoa/booty/master/scripts/booty-downlo
 curl https://raw.githubusercontent.com/naddeoa/booty/master/scripts/booty-download-mac-universal.sh | bash
 ```
 
-## Syntax
+# Usage
+
+You can run `booty --help` to see all of the options. You'll generally cd to a directory with an `install.booty` file and run `booty`.
+You'll see a table that shows the status of all of your targets and you'll be prompted to install all of the missing ones, which will
+display in real time as a second table with a row for each target getting setup.
+
+```bash
+Usage: booty_linux_x86_64 [OPTIONS]
+
+Options:
+  -c, --config TEXT  Path to the install.sysc file
+  -s, --status       Check the status of all known targets
+  -i, --install      Install all uninstalled targets
+  -y, --yes          Don't prompt for confirmation
+  --help             Show this message and exit.
+```
+
+# Syntax Support
 
 A simple syntax definition is available for vim/nvim. This can be placed in `~/.config/nvim/syntax/booty.vim`, for example. This will be
 updated with a dedicated repo soon.
@@ -221,4 +240,3 @@ Some features that might be useful.
 
 - Global variables. This would probably look just like make variables.
 - Block child target installs if a dependency fails first. It will proceed today and most likely fail for that target anyway.
-
