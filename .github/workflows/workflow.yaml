@@ -27,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v1
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         name: Install Python
         with:
           python-version: "3.11.6"
@@ -85,7 +85,7 @@ jobs:
       upload_url: ${{ steps.save_upload_url.outputs.upload_url }}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Create Release
         id: create_release
@@ -126,7 +126,7 @@ jobs:
             variant: linux
             BINARY_NAME: booty_linux_x86_64
             BUILD_BINARY_COMMAND: "make build-binary-linux"
-          - os: macos-12
+          - os: macos-12  # Set to 12 to make sure it stays an x86 host. Future mac seems to be arm.
             variant: mac_x86_64
             BINARY_NAME: booty_mac_x86_64
             BUILD_BINARY_COMMAND: "make build-binary-mac"
@@ -141,7 +141,7 @@ jobs:
           #   BUILD_BINARY_COMMAND: "make build-binary-mac-arm"
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         name: Install Python
