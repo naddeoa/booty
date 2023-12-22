@@ -1,26 +1,10 @@
 name: Build CI
 
 on:
-  push:
-    branches: ["master"]
   pull_request:
     branches: ["*"]
 
 jobs:
-  setup:
-    name: Setup
-    runs-on: ubuntu-latest
-    outputs:
-      short_sha: ${{ steps.short_sha_setup.outputs.short_sha }}
-    steps:
-      - uses: actions/checkout@v3
-      - name: Save short sha
-        shell: bash
-        id: short_sha_setup
-        run: |
-          SHA=$(git rev-parse --short=20 ${{ github.sha }})
-          echo "short_sha=$SHA" >> "$GITHUB_OUTPUT"
-
   build:
     runs-on: ubuntu-latest
 
