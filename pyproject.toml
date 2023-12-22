@@ -1,7 +1,10 @@
 [tool.poetry]
 name = "booty-cli"
 version = "1.0.5"
-description = ""
+description = "A language and command line utility for bootstrapping the setup of personal OS installs."
+homepage = "https://github.com/naddeoa/booty"
+repository = "https://github.com/naddeoa/booty"
+keywords = ["bootstrap", "booty", "setup", "cli", "tool"]
 authors = ["Anthony Naddeo <anthony.naddeo@gmail.com>"]
 license = "MIT"
 readme = "README.md"
@@ -17,7 +20,6 @@ python = ">=3.9, <3.13"
 lark = "^1.1.8"
 networkx = "^3.2.1"
 click = "^8.1.7"
-pytermgui = "^7.7.0"
 progress-table = "^0.1.27"
 
 
