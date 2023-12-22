@@ -17,7 +17,7 @@ def cli(config: str, yes: bool, status: bool = True, install: bool = False, debu
         click.echo(f"Config file {config} does not exist. Use -c to specify the location of an install.booty file.")
         sys.exit(1)
 
-    app = App(config, print_ast=debug)
+    app = App(config, debug=debug)
 
     if not install and not status:
         install = True

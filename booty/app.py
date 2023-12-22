@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 import time
+from pprint import pprint
 from typing import Any, Dict, Generator, List, Literal, cast
 
 from booty.ast_util import get_dependencies, get_executable_index, get_recipe_definition_index
@@ -25,11 +26,11 @@ class StatusResult:
 
 
 class App:
-    def __init__(self, config_path: str, print_ast: bool = False) -> None:
+    def __init__(self, config_path: str, debug: bool = False) -> None:
         self.config_path = config_path
-        self.data = self.setup(print_ast)
+        self.data = self.setup(debug)
 
-    def setup(self, print_ast: bool) -> SystemconfData:
+    def setup(self, debug: bool) -> SystemconfData:
         """
         Parse the config file and create all of the indexes that we'll need to execute the booty.
         Also runs validation.
@@ -38,13 +39,23 @@ class App:
             config = f.read()
 
         ast = parse(config)
-        if print_ast:
+        if debug:
+            print("AST:")
             print(ast.pretty())
         stdlib_ast = parse(stdlib)
         executables = get_executable_index(ast)
+        if debug:
+            print("Executables:")
+            pprint(executables)
         dependencies = get_dependencies(ast, executables)
+        if debug:
+            print("Dependencies:")
+            pprint(dependencies)
         G = get_dependency_graph(dependencies)
         recipes = get_recipe_definition_index(ast)
+        if debug:
+            print("Recipes:")
+            pprint(recipes)
         std_recipes = get_recipe_definition_index(stdlib_ast)
         all_recipes = {**std_recipes, **recipes}  # Make the user recipes overwrite the stdlib ones
         conf = SystemconfData(execution_index=executables, recipe_index=all_recipes, G=G, ast=ast, dependency_index=dependencies)
