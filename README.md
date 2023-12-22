@@ -41,13 +41,14 @@ You can run `booty --help` to see all of the options. You'll generally cd to a d
 You'll see a table that shows the status of all of your targets and you'll be prompted to install all of the missing ones, which will
 display in real-time as a second table with a row for each target getting setup.
 
-```bash
+```
 Usage: booty_linux_x86_64 [OPTIONS]
 
 Options:
   -c, --config TEXT  Path to the install.sysc file
   -s, --status       Check the status of all known targets
   -i, --install      Install all uninstalled targets
+  -d, --debug        See the AST of the config file
   -y, --yes          Don't prompt for confirmation
   --help             Show this message and exit.
 ```
@@ -69,7 +70,8 @@ This Dockerfile is what I use to test my own installs.
 ```Dockerfile
 from naddeoa/booty:ubuntu22.04
 
-RUN curl https://raw.githubusercontent.com/naddeoa/booty/master/scripts/booty-download-linux.sh | bash # MANUAL install bin directly without pip
+RUN sudo apt-get install -y curl # Just like IRL, install curl first
+RUN curl https://raw.githubusercontent.com/naddeoa/booty/master/scripts/booty-download-linux.sh | bash # MANUAL install booty without pip
 
 # Copy my ssh keys in so I can clone my private repos
 COPY ./ssh ./.ssh
@@ -80,9 +82,9 @@ COPY ./examples/install.booty ./
 
 # This would be on my path IRL
 ENV PATH="/home/myuser/.local/bin:${PATH}"
-RUN booty -i -y
 
 CMD ["bash"]
+
 ```
 
 Then you build and run the image, and execute booty.
