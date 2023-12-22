@@ -515,23 +515,6 @@ all = ["twine (>=3.4.1)"]
 dev = ["twine (>=3.4.1)"]
 
 [[package]]
-name = "pytermgui"
-version = "7.7.0"
-description = "Python TUI framework with mouse support, modular widget system, customizable and rapid terminal markup language and more!"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "pytermgui-7.7.0-py3-none-any.whl", hash = "sha256:2a7615471386f77e8d46a571931eaecd21dbb5ffad73cb376cea39474edd57fb"},
-    {file = "pytermgui-7.7.0.tar.gz", hash = "sha256:aad906af877e86a80a6131b4decd3f527a34d561917dea850a24f5fabb07acd1"},
-]
-
-[package.dependencies]
-typing-extensions = "*"
-
-[package.extras]
-yaml = ["pyyaml"]
-
-[[package]]
 name = "pytest"
 version = "7.4.3"
 description = "pytest: simple powerful testing with Python"
@@ -693,4 +676,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9, <3.13"
-content-hash = "fb03d8d259b99c174c5271ba8e9e9f90269d5f936a05b3088ad51cf688408ec4"
+content-hash = "1ee02f7a7bcca5853f15931555c2b1a1840a68fd0e899e5203a944b3cee0c008"
