@@ -209,7 +209,7 @@ pyenv:
 ## Dependencies
 
 Dependencies determine the execution order at setup time. The way that you declare this is flexible. You can use either the `depends on`
-syntax (`->`) or the `depended upon` syntax (`<-`). This is allowed because its sometimes easier to manage a bunch of dependencies in a
+syntax (`->`) or the `depended upon` syntax (`<-`). This is allowed because it's sometimes easier to manage a bunch of dependencies in a
 single line when they're logically related. Its personal preference for how you maintain your install.booty file.
 
 ```haskell
@@ -235,10 +235,15 @@ recipe apt(packages):
         fi
       done
 
+recipe ppa(name):
+    setup:
+        sudo add-apt-repository $((name))
+        sudo apt update
+    is_setup: grep $((name)) /etc/apt/sources.list
+
 recipe pipx(packages):
     setup: pipx install $((packages))
     is_setup: pipx list | grep $((packages))
-
 
 recipe git(repo dist):
     setup: git clone $((repo)) $((dist))
@@ -259,6 +264,7 @@ recipe cp(src dst):
         mkdir -p $(dirname $((dst)))
         cp -r $((src)) $((dst))
     is_setup: test -e $((dst))
+
 ```
 
 Any of these can be referenced from any booty.install file, and you can redifine them locally if you want different recipe logic that uses
