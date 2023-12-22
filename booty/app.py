@@ -25,11 +25,11 @@ class StatusResult:
 
 
 class App:
-    def __init__(self, config_path: str) -> None:
+    def __init__(self, config_path: str, print_ast: bool = False) -> None:
         self.config_path = config_path
-        self.data = self.setup()
+        self.data = self.setup(print_ast)
 
-    def setup(self) -> SystemconfData:
+    def setup(self, print_ast: bool) -> SystemconfData:
         """
         Parse the config file and create all of the indexes that we'll need to execute the booty.
         Also runs validation.
@@ -38,6 +38,8 @@ class App:
             config = f.read()
 
         ast = parse(config)
+        if print_ast:
+            print(ast.pretty())
         stdlib_ast = parse(stdlib)
         executables = get_executable_index(ast)
         dependencies = get_dependencies(ast, executables)

@@ -112,35 +112,55 @@ def get_executable_index(ast: ParseTree) -> ExecutableIndex:
         for definition in target.find_data("def"):
             for single_or_multi_def in definition.find_pred(lambda node: node.data == "single_line_def" or node.data == "multi_line_def"):
                 implements = find_token_value(single_or_multi_def, "IMPLEMENTS_NAME").strip()
+
                 executables[target_name][implements] = executables[target_name].get(implements, None) or []
 
-                for shell_or_recipe in single_or_multi_def.find_pred(
-                    lambda node: node.data == "recipe_invocation" or node.data == "shell_line"
-                ):
-                    if isinstance(shell_or_recipe, Token):
-                        raise Exception("This should be impossible")
+                if single_or_multi_def.data == "multi_line_def":
+                    for multiline_shell_or_recipe in single_or_multi_def.find_pred(
+                        lambda node: node.data == "recipe_invocation" or node.data == "shell_line"
+                    ):
+                        if multiline_shell_or_recipe.data == "shell_line":
+                            cmd = "\n".join([it for it in find_token_values(multiline_shell_or_recipe, "SHELL_LINE")])
+                            shell_command = ShellCommand(cmd)
+                            executables[target_name][implements].append(shell_command)
+                        else:
+                            recipe_name = find_token_value(multiline_shell_or_recipe, "NAME")
 
-                    recipe_parameters = list(shell_or_recipe.find_data("recipe_parameter_list"))
-                    shell_lines = find_token_values(shell_or_recipe, "SHELL_LINE")
+                            args: Sequence[Sequence[str]] = []
+                            for parameter in list(multiline_shell_or_recipe.find_data("recipe_parameter_list")):
+                                args.append(find_token_values(parameter, "INVOCATION_ARGS"))
 
-                    if len(recipe_parameters) > 0 and len(shell_lines) > 0:
-                        raise Exception(
-                            f"This should be impossible, they're mutually exclusive in the grammar: {recipe_parameters}\n{shell_lines}"
-                        )
+                            recipe_invocation = RecipeInvocation(recipe_name, args)
+                            executables[target_name][implements].append(recipe_invocation)
 
-                    if len(shell_lines) > 0:
-                        cmd = "\n".join([it for it in shell_lines])
-                        shell_command = ShellCommand(cmd)
-                        executables[target_name][implements].append(shell_command)
-                    else:
-                        recipe_name = find_token_value(single_or_multi_def, "NAME")
+                else:  # single line def
+                    for shell_or_recipe in single_or_multi_def.find_pred(
+                        lambda node: node.data == "recipe_invocation" or node.data == "shell_line"
+                    ):
+                        if isinstance(shell_or_recipe, Token):
+                            raise Exception("This should be impossible")
 
-                        args: Sequence[Sequence[str]] = []
-                        for parameter in recipe_parameters:
-                            args.append(find_token_values(parameter, "INVOCATION_ARGS"))
+                        recipe_parameters = list(shell_or_recipe.find_data("recipe_parameter_list"))
+                        shell_lines = find_token_values(shell_or_recipe, "SHELL_LINE")
 
-                        recipe_invocation = RecipeInvocation(recipe_name, args)
-                        executables[target_name][implements].append(recipe_invocation)
+                        if len(recipe_parameters) > 0 and len(shell_lines) > 0:
+                            raise Exception(
+                                f"This should be impossible, they're mutually exclusive in the grammar: {recipe_parameters}\n{shell_lines}"
+                            )
+
+                        if len(shell_lines) > 0:
+                            cmd = "\n".join([it for it in shell_lines])
+                            shell_command = ShellCommand(cmd)
+                            executables[target_name][implements].append(shell_command)
+                        else:
+                            recipe_name = find_token_value(single_or_multi_def, "NAME")
+
+                            args: Sequence[Sequence[str]] = []
+                            for parameter in recipe_parameters:
+                                args.append(find_token_values(parameter, "INVOCATION_ARGS"))
+
+                            recipe_invocation = RecipeInvocation(recipe_name, args)
+                            executables[target_name][implements].append(recipe_invocation)
 
         # targets that just call a recipe, they don't define their logic inline
         for recipe_invocation in target.find_data("recipe_invocation"):
