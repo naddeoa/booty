@@ -9,10 +9,15 @@ recipe apt(packages):
         fi
       done
 
+recipe ppa(name):
+    setup:
+        sudo add-apt-repository $((name))
+        sudo apt update
+    is_setup: grep $((name)) /etc/apt/sources.list
+
 recipe pipx(packages):
     setup: pipx install $((packages))
     is_setup: pipx list | grep $((packages))
-
 
 recipe git(repo dist):
     setup: git clone $((repo)) $((dist))

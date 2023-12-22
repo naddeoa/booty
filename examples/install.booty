@@ -135,3 +135,20 @@ node:
     is_setup: 
         fish -c "nvm exec --lts node --version"
 
+
+##
+## Racket
+##
+
+racket:
+    setup:
+        ppa(ppa:plt/racket)
+        apt(racket)
+
+    is_setup: which racket
+
+frog -> racket
+frog:
+    setup: raco pkg install frog
+    is_setup: raco pkg show frog | grep Package
+

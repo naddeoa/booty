@@ -9,12 +9,15 @@ from booty.app import App
 @click.option("-c", "--config", type=str, required=False, help="Path to the install.sysc file", default="./install.booty")
 @click.option("-s", "--status", type=bool, is_flag=True, required=False, help="Check the status of all known targets")
 @click.option("-i", "--install", type=bool, is_flag=True, required=False, help="Install all uninstalled targets")
+@click.option("-d", "--debug", type=bool, is_flag=True, required=False, help="See the AST of the config file")
 @click.option("-y", "--yes", type=bool, is_flag=True, required=False, help="Don't prompt for confirmation")
-def cli(config: str, yes: bool, status: bool = True, install: bool = False):
+def cli(config: str, yes: bool, status: bool = True, install: bool = False, debug: bool = False):
     # Make sure config exists
     if not pathlib.Path(config).exists():
         click.echo(f"Config file {config} does not exist. Use -c to specify the location of an install.booty file.")
         sys.exit(1)
+
+    app = App(config, debug=debug)
 
     if not install and not status:
         install = True
