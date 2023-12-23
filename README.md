@@ -106,48 +106,7 @@ infrequently, when you initially create your `install.booty` file or when you ma
 
 # Syntax Support
 
-A simple syntax definition is available for vim/nvim. This can be placed in `~/.config/nvim/syntax/booty.vim`, for example. This will be
-updated with a dedicated repo soon.
-
-```vim
-syntax clear
-
-syntax region bootyArgs start=/(/ end=/)/ contains=@Spell
-syntax region bootyParams start=/$((/ end=/))/ contains=@Spell
-syntax match bootyTargetName "\v^\zs[^ \t:]+\ze:.*"
-syntax match bootyTargetDependenciesName "\v^\zs[^ \t]+\ze\s+(-\>|\<-).*"
-syntax match bootyImplementsName "\v^\s+\zs[^ \t:]+\ze:.*"
-syntax keyword bootyKeyword recipe setup is_setup
-syntax match bootyOpDependsOn "->"
-syntax match bootyOpDependedUpon "<-"
-syntax match bootyComment "^#.*$"
-
-highlight link bootyComment Comment
-highlight link bootyKeyword Keyword
-highlight link bootyOpDependsOn Operator
-highlight link bootyOpDependedUpon Operator
-highlight link bootyTargetName Function
-highlight link bootyTargetDependenciesName Function
-highlight link bootyImplementsName Function
-highlight link bootyRecipeCall Funciton
-highlight link bootyArgs String
-highlight link bootyParams Type
-```
-
-Along with a file type snippet.
-
-```lua
--- neovim init.lua
-vim.api.nvim_create_autocmd({"BufRead", "BufNewFile"}, {
-    pattern = "*.booty",
-    command = "set filetype=booty",
-})
-```
-
-```vim
-" vim .vimrc
-autocmd BufRead,BufNewFile *.booty set filetype=booty
-```
+See (naddeoa/vim-booty)[https://github.com/naddeoa/vim-booty] for the syntax plugin.
 
 # Booty Language
 
@@ -301,4 +260,3 @@ Some features that might be useful. If you feel up to contributing then these co
 - Block child target installs if a dependency fails first. It will proceed today and most likely fail for that target anyway.
 - Windows support. For all I know it already works, but I don't use Windows. It would be good to get a binary building for Windows users.
 - Confirm the mac binaries work. I only use Linux personally.
-- Package up the syntax file so it can be installed with Packer/etc. (vim/nvim).
