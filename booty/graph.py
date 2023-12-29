@@ -1,5 +1,7 @@
 from dataclasses import dataclass
-from typing import Dict, Generator, List, Sequence, Set, TypeVar
+from typing import Dict, Generator, Iterator, List, Sequence, Set, TypeVar
+
+from booty.ast_util import DependencyIndex
 
 T = TypeVar("T")
 
@@ -28,12 +30,30 @@ class DependencyBuilder:
         return Dependency(self.value, [child for child in self.children])
 
 
+# This is the root of the graph. Every target that doesn't have any dependencies
+# will depend on this node and the graph search will start from this node.
+StartNode = "__START__"
+
+
 @dataclass
 class DependencyGraph:
     start: Dependency
     dependencies: Dict[str, Dependency]
 
-    def bfs(self) -> Generator[Dependency, bool, Sequence[str]]:
+    @classmethod
+    def from_index(cls, dependencies: DependencyIndex) -> "DependencyGraph":
+        builder = DependencyGraphBuilder(StartNode)
+
+        for package, deps in dependencies.items():
+            if not deps:
+                builder.add_dependency(StartNode, package)
+            else:
+                for dep in deps:
+                    builder.add_dependency(package, dep)
+
+        return builder.build()
+
+    def bfs(self) -> Generator[str, bool, Sequence[str]]:
         to_visit: List[Dependency] = [self.start]
         visited: Set[str] = set()
         to_skip: Set[str] = set()
@@ -41,7 +61,6 @@ class DependencyGraph:
 
         while to_visit:
             current = to_visit.pop(0)
-            visited.add(current.value)
 
             # If current has any failed parents then skip it
             if current.value in to_skip:
@@ -49,7 +68,11 @@ class DependencyGraph:
                 to_skip.update(current.children)
                 continue
 
-            success = yield current  # Signaled from the generator caller
+            if current.value in visited:
+                continue
+            else:
+                success = yield current.value  # Signaled from the generator caller
+                visited.add(current.value)
 
             if not success:
                 to_skip.update(current.children)
@@ -61,7 +84,20 @@ class DependencyGraph:
         all_skipped.sort()
         return all_skipped
 
-    def has_cycle(self) -> List[str]:
+    def iterator(self, skip_first: bool = True) -> Iterator[str]:
+        """
+        Iterate over the dependencies in dependency order.
+        """
+        gen = self.bfs()
+        try:
+            target = next(gen)
+            while True:
+                yield target
+                target = gen.send(True)
+        except StopIteration:
+            pass
+
+    def find_first_cycle(self) -> List[str]:
         def _dfs(node: Dependency, visited: Set[str], stack: Dict[str, None]) -> List[str]:
             visited.add(node.value)
             stack[node.value] = None

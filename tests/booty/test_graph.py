@@ -10,7 +10,7 @@ def test_all_success():
     try:
         target = next(gen)
         while True:
-            targets.append(target.value)
+            targets.append(target)
             target = gen.send(True)
     except StopIteration as e:
         skipped = e.value
@@ -18,7 +18,7 @@ def test_all_success():
     assert graph.start.value == "a"
     assert ["a", "b", "c", "d"] == targets
     assert [] == skipped
-    assert graph.has_cycle() == []
+    assert graph.find_first_cycle() == []
 
 
 def test_start_failure():
@@ -29,7 +29,7 @@ def test_start_failure():
     try:
         target = next(gen)
         while True:
-            targets.append(target.value)
+            targets.append(target)
             target = gen.send(False)
     except StopIteration as e:
         skipped = e.value
@@ -37,7 +37,7 @@ def test_start_failure():
     assert graph.start.value == "a"
     assert ["a"] == targets
     assert ["b", "c", "d"] == skipped
-    assert graph.has_cycle() == []
+    assert graph.find_first_cycle() == []
 
 
 def test_last_failure():
@@ -48,15 +48,15 @@ def test_last_failure():
     try:
         target = next(gen)
         while True:
-            targets.append(target.value)
-            target = gen.send(target.value != "c")
+            targets.append(target)
+            target = gen.send(target != "c")
     except StopIteration as e:
         skipped = e.value
 
     assert graph.start.value == "a"
     assert ["a", "b", "c"] == targets
     assert ["d"] == skipped
-    assert graph.has_cycle() == []
+    assert graph.find_first_cycle() == []
 
 
 def test_wide_graph():
@@ -67,7 +67,7 @@ def test_wide_graph():
     try:
         target = next(gen)
         while True:
-            targets.append(target.value)
+            targets.append(target)
             target = gen.send(True)
     except StopIteration as e:
         skipped = e.value
@@ -76,7 +76,7 @@ def test_wide_graph():
     assert graph.start.value == "a"
     assert ["a", "b", "c", "d"] == targets
     assert [] == skipped
-    assert graph.has_cycle() == []
+    assert graph.find_first_cycle() == []
 
 
 def test_wide_graph_with_failure():
@@ -87,8 +87,8 @@ def test_wide_graph_with_failure():
     try:
         target = next(gen)
         while True:
-            targets.append(target.value)
-            target = gen.send(target.value != "c")
+            targets.append(target)
+            target = gen.send(target != "c")
     except StopIteration as e:
         skipped = e.value
     targets.sort()
@@ -96,7 +96,7 @@ def test_wide_graph_with_failure():
     assert graph.start.value == "a"
     assert ["a", "b", "c", "d"] == targets
     assert [] == skipped
-    assert graph.has_cycle() == []
+    assert graph.find_first_cycle() == []
 
 
 def test_wide_graph_with_failure_start():
@@ -107,7 +107,7 @@ def test_wide_graph_with_failure_start():
     try:
         target = next(gen)
         while True:
-            targets.append(target.value)
+            targets.append(target)
             target = gen.send(False)  # Fail right away
     except StopIteration as e:
         skipped = e.value
@@ -116,7 +116,7 @@ def test_wide_graph_with_failure_start():
     assert graph.start.value == "a"
     assert ["a"] == targets
     assert ["b", "c", "d"] == skipped
-    assert graph.has_cycle() == []
+    assert graph.find_first_cycle() == []
 
 
 def test_ancestor_failure():
@@ -146,8 +146,8 @@ def test_ancestor_failure():
     try:
         target = next(gen)
         while True:
-            targets.append(target.value)
-            target = gen.send(target.value != "c")
+            targets.append(target)
+            target = gen.send(target != "c")
     except StopIteration as e:
         skipped = e.value
     targets.sort()
@@ -156,7 +156,8 @@ def test_ancestor_failure():
     assert graph.start.value == "a"
     assert ["a", "b", "c", "f"] == targets
     assert ["d", "e"] == skipped
-    assert graph.has_cycle() == []
+    assert graph.find_first_cycle() == []
+
 
 def test_ancestor_failure_other_parent():
     """
@@ -185,8 +186,8 @@ def test_ancestor_failure_other_parent():
     try:
         target = next(gen)
         while True:
-            targets.append(target.value)
-            target = gen.send(target.value != "b")
+            targets.append(target)
+            target = gen.send(target != "b")
     except StopIteration as e:
         skipped = e.value
     targets.sort()
@@ -195,29 +196,20 @@ def test_ancestor_failure_other_parent():
     assert graph.start.value == "a"
     assert ["a", "b", "c"] == targets
     assert ["d", "e", "f"] == skipped
-    assert graph.has_cycle() == []
+    assert graph.find_first_cycle() == []
+
 
 def test_cycle():
-    graph = (
-        DependencyGraphBuilder("a")
-        .add_dependency("a", "b")
-        .add_dependency("b", "c")
-        .add_dependency("c", "a")
-        .build()
-    )
+    graph = DependencyGraphBuilder("a").add_dependency("a", "b").add_dependency("b", "c").add_dependency("c", "a").build()
 
-    assert graph.has_cycle() == ["a", "b", "c", "a"]
+    assert graph.find_first_cycle() == ["a", "b", "c", "a"]
+
 
 def test_cycle_deeper():
-    graph = (
-        DependencyGraphBuilder("a")
-        .add_dependency("a", "b")
-        .add_dependency("b", "c")
-        .add_dependency("c", "b")
-        .build()
-    )
+    graph = DependencyGraphBuilder("a").add_dependency("a", "b").add_dependency("b", "c").add_dependency("c", "b").build()
 
-    assert graph.has_cycle() == ["a", "b", "c", "b"]
+    assert graph.find_first_cycle() == ["a", "b", "c", "b"]
+
 
 def test_cycle_wide():
     graph = (
@@ -229,4 +221,35 @@ def test_cycle_wide():
         .build()
     )
 
-    assert graph.has_cycle() == ["a", "b", "c", "b"]
+    assert graph.find_first_cycle() == ["a", "b", "c", "b"]
+
+
+def test_iterator():
+    graph = (
+        DependencyGraphBuilder("a")
+        .add_dependency("a", "b")
+        .add_dependency("a", "c")
+        .add_dependency("c", "d")
+        .add_dependency("b", "d")
+        .add_dependency("b", "d")
+        .add_dependency("b", "f")
+        .add_dependency("d", "e")
+        .build()
+    )
+
+    print(list(graph.iterator()))
+    assert list(graph.iterator()) == ["a", "b", "c", "d", "f", "e"]
+
+
+def test_iterator_wide():
+    graph = (
+        DependencyGraphBuilder("a")
+        .add_dependency("a", "b")
+        .add_dependency("a", "c")
+        .add_dependency("a", "d")
+        .add_dependency("d", "e")
+        .build()
+    )
+
+    print(list(graph.iterator()))
+    assert list(graph.iterator()) == ["a", "b", "c", "d", "e"]

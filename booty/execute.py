@@ -1,27 +1,24 @@
 from subprocess import CalledProcessError
 from typing import Callable, Dict, List, Optional
 from lark import ParseTree
-import networkx as nx
 from dataclasses import dataclass
 from booty.ast_util import ExecutableIndex, RecipeDefinitionIndex, DependencyIndex
-from booty.dependencies import bfs_iterator
+from booty.graph import DependencyGraph
 from booty.types import Executable, ShellCommand
 
 
 @dataclass
-class SystemconfData:
+class BootyData:
     execution_index: ExecutableIndex
     dependency_index: DependencyIndex
     recipe_index: RecipeDefinitionIndex
-    G: nx.DiGraph
+    G: DependencyGraph
     ast: ParseTree
 
 
-def check_status_all(data: SystemconfData) -> Dict[str, Optional[CalledProcessError]]:
-    bst_iterator = bfs_iterator(data.G)
-
+def check_status_all(data: BootyData) -> Dict[str, Optional[CalledProcessError]]:
     results: Dict[str, Optional[CalledProcessError]] = {}
-    for target in bst_iterator:
+    for target in data.G.iterator():
         # print(target)
         exec = data.execution_index[target]
 
@@ -37,7 +34,7 @@ def check_status_all(data: SystemconfData) -> Dict[str, Optional[CalledProcessEr
     return results
 
 
-def check_target_status(data: SystemconfData, target: str) -> Optional[CalledProcessError]:
+def check_target_status(data: BootyData, target: str) -> Optional[CalledProcessError]:
     exec = data.execution_index[target]
     commands = _get_is_setup(data, exec)
     for command in commands:
@@ -47,7 +44,7 @@ def check_target_status(data: SystemconfData, target: str) -> Optional[CalledPro
             return e
 
 
-def _get_is_setup(data: SystemconfData, it: Dict[str, List[Executable]]) -> List[Callable[[], None]]:
+def _get_is_setup(data: BootyData, it: Dict[str, List[Executable]]) -> List[Callable[[], None]]:
     exec = it["is_setup"] if "is_setup" in it else it["recipe"]
 
     execs: List[Callable[[], None]] = []
@@ -64,7 +61,7 @@ def _get_is_setup(data: SystemconfData, it: Dict[str, List[Executable]]) -> List
     return execs
 
 
-def install_target(data: SystemconfData, target: str) -> Optional[CalledProcessError]:
+def install_target(data: BootyData, target: str) -> Optional[CalledProcessError]:
     exec = data.execution_index[target]
     commands = _get_setup(data, exec)
     for command in commands:
@@ -74,7 +71,7 @@ def install_target(data: SystemconfData, target: str) -> Optional[CalledProcessE
             return e
 
 
-def _get_setup(data: SystemconfData, it: Dict[str, List[Executable]]) -> List[Callable[[], None]]:
+def _get_setup(data: BootyData, it: Dict[str, List[Executable]]) -> List[Callable[[], None]]:
     exec = it["setup"] if "setup" in it else it["recipe"]
 
     execs: List[Callable[[], None]] = []

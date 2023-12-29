@@ -4,8 +4,8 @@ from pprint import pprint
 from typing import Any, Dict, Generator, List, Literal, cast
 
 from booty.ast_util import get_dependencies, get_executable_index, get_recipe_definition_index
-from booty.dependencies import bfs_iterator, get_dependency_graph
-from booty.execute import SystemconfData, check_target_status, install_target
+from booty.execute import BootyData, check_target_status, install_target
+from booty.graph import DependencyGraph
 from booty.parser import parse
 from booty.types import Executable, RecipeInvocation
 from booty.validation import validate
@@ -30,7 +30,7 @@ class App:
         self.config_path = config_path
         self.data = self.setup(debug)
 
-    def setup(self, debug: bool) -> SystemconfData:
+    def setup(self, debug: bool) -> BootyData:
         """
         Parse the config file and create all of the indexes that we'll need to execute the booty.
         Also runs validation.
@@ -51,14 +51,14 @@ class App:
         if debug:
             print("Dependencies:")
             pprint(dependencies)
-        G = get_dependency_graph(dependencies)
+        G = DependencyGraph.from_index(dependencies)
         recipes = get_recipe_definition_index(ast)
         if debug:
             print("Recipes:")
             pprint(recipes)
         std_recipes = get_recipe_definition_index(stdlib_ast)
         all_recipes = {**std_recipes, **recipes}  # Make the user recipes overwrite the stdlib ones
-        conf = SystemconfData(execution_index=executables, recipe_index=all_recipes, G=G, ast=ast, dependency_index=dependencies)
+        conf = BootyData(execution_index=executables, recipe_index=all_recipes, G=G, ast=ast, dependency_index=dependencies)
         validate(conf)
         return conf
 
@@ -77,7 +77,7 @@ class App:
         table.add_column("target", width=largest_target_name)  # type: ignore[reportUnknownMemberType]
         table.add_column("dependencies", width=largest_dependency_name)  # type: ignore[reportUnknownMemberType]
 
-        for target in bfs_iterator(self.data.G):
+        for target in self.data.G.iterator():
             deps_string = dependency_strings[target]
             table["target"] = target
             table["dependencies"] = deps_string
@@ -108,7 +108,7 @@ class App:
         table.add_column("details", width=70)  # type: ignore[reportUnknownMemberType]
         table.add_column("time", alignment="right", width=15)  # type: ignore[reportUnknownMemberType]
 
-        prog: Generator[str, Any, None] = cast(Generator[str, Any, None], table(bfs_iterator(self.data.G)))
+        prog: Generator[str, Any, None] = cast(Generator[str, Any, None], table(self.data.G.iterator()))
         status_result = StatusResult()
         total_time = 0.0
         for target in prog:
@@ -168,7 +168,7 @@ class App:
         table.add_column("time", alignment="right", width=15)  # type: ignore[reportUnknownMemberType]
         missing_packages = set(status_result.missing)
 
-        prog: Generator[str, Any, None] = cast(Generator[str, Any, None], table(bfs_iterator(self.data.G)))
+        prog: Generator[str, Any, None] = cast(Generator[str, Any, None], table(self.data.G.iterator()))
         total_time = 0.0
         status_result = StatusResult()
         for target in prog:
