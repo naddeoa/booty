@@ -224,21 +224,23 @@ def test_cycle_wide():
     assert graph.find_first_cycle() == ["a", "b", "c", "b"]
 
 
-def test_iterator():
+def test_iterator_skip():
+    """
+    Skipping first by default because our booty dependency graphs start with a fake
+    start node that all of the dependency-less targets depend on.
+    """
     graph = (
         DependencyGraphBuilder("a")
         .add_dependency("a", "b")
         .add_dependency("a", "c")
         .add_dependency("c", "d")
         .add_dependency("b", "d")
-        .add_dependency("b", "d")
         .add_dependency("b", "f")
         .add_dependency("d", "e")
         .build()
     )
 
-    print(list(graph.iterator()))
-    assert list(graph.iterator()) == ["a", "b", "c", "d", "f", "e"]
+    assert list(graph.iterator(skip_first=True)) == ["b", "c", "d", "f", "e"]
 
 
 def test_iterator_wide():
@@ -251,5 +253,19 @@ def test_iterator_wide():
         .build()
     )
 
-    print(list(graph.iterator()))
-    assert list(graph.iterator()) == ["a", "b", "c", "d", "e"]
+    assert list(graph.iterator(skip_first=True)) == ["b", "c", "d", "e"]
+
+
+def test_no_skip():
+    graph = (
+        DependencyGraphBuilder("a")
+        .add_dependency("a", "b")
+        .add_dependency("a", "c")
+        .add_dependency("c", "d")
+        .add_dependency("b", "d")
+        .add_dependency("b", "f")
+        .add_dependency("d", "e")
+        .build()
+    )
+
+    assert list(graph.iterator(skip_first=False)) == ["a", "b", "c", "d", "f", "e"]

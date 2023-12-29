@@ -7,6 +7,7 @@ from booty.ast_util import get_dependencies, get_executable_index, get_recipe_de
 from booty.execute import BootyData, check_target_status, install_target
 from booty.graph import DependencyGraph
 from booty.parser import parse
+from booty.target_logger import TargetLogger
 from booty.types import Executable, RecipeInvocation
 from booty.validation import validate
 from booty.lang.stdlib import stdlib
@@ -26,9 +27,10 @@ class StatusResult:
 
 
 class App:
-    def __init__(self, config_path: str, debug: bool = False) -> None:
+    def __init__(self, config_path: str, logger: TargetLogger, debug: bool = False) -> None:
         self.config_path = config_path
         self.data = self.setup(debug)
+        self.logger = logger
 
     def setup(self, debug: bool) -> BootyData:
         """
@@ -62,29 +64,6 @@ class App:
         validate(conf)
         return conf
 
-    def list_dependencies(self) -> None:
-        """
-        List all targets with their dependencies
-        """
-
-        largest_target_name = max([len(t) for t in self.data.execution_index.keys()])
-        dependency_strings: Dict[str, str] = {
-            target: ", ".join(deps) if deps else "-" for target, deps in self.data.dependency_index.items()
-        }
-        largest_dependency_name = max([len(t) for t in dependency_strings.values()])
-
-        table = ProgressTable()
-        table.add_column("target", width=largest_target_name)  # type: ignore[reportUnknownMemberType]
-        table.add_column("dependencies", width=largest_dependency_name)  # type: ignore[reportUnknownMemberType]
-
-        for target in self.data.G.iterator():
-            deps_string = dependency_strings[target]
-            table["target"] = target
-            table["dependencies"] = deps_string
-            table.next_row()
-
-        table.close()
-
     def status(self) -> StatusResult:
         """
         List the install status of each target
@@ -108,7 +87,8 @@ class App:
         table.add_column("details", width=70)  # type: ignore[reportUnknownMemberType]
         table.add_column("time", alignment="right", width=15)  # type: ignore[reportUnknownMemberType]
 
-        prog: Generator[str, Any, None] = cast(Generator[str, Any, None], table(self.data.G.iterator()))
+        print("Getting target status:")
+        prog: Generator[str, Any, None] = cast(Generator[str, Any, None], table(list(self.data.G.iterator())))
         status_result = StatusResult()
         total_time = 0.0
         for target in prog:
@@ -137,11 +117,13 @@ class App:
                     table["status"] = "🟡 Not installed"
                     table["details"] = result.stdout if result.stdout else table["details"]
                     status_result.missing.append(target)
+                    self.logger.log_is_setup(target, result.stdout, result.stderr)
                 else:
                     # TODO send PR to library to fix the formatting with unicode/emoji. Length is wrong.
                     table["status"] = "🔴 Error"
                     table["details"] = result.stderr.strip()
                     status_result.errors.append(target)
+                    self.logger.log_is_setup(target, result.stdout, result.stderr)
 
             table.next_row()
 
@@ -166,43 +148,59 @@ class App:
         table.add_column("status", width=15)  # type: ignore[reportUnknownMemberType]
         table.add_column("details", width=100)  # type: ignore[reportUnknownMemberType]
         table.add_column("time", alignment="right", width=15)  # type: ignore[reportUnknownMemberType]
-        missing_packages = set(status_result.missing)
+        missing_packages = set([*status_result.missing, *status_result.errors])
 
-        prog: Generator[str, Any, None] = cast(Generator[str, Any, None], table(self.data.G.iterator()))
+        prog: Generator[str, Any, None] = cast(Generator[str, Any, None], table(len(self.data.G.dependencies.keys())))
+
+        print("Installing targets:")
+
         total_time = 0.0
         status_result = StatusResult()
-        for target in prog:
-            # TODO skip the target install if any of its dependencies failed install
-            if target not in missing_packages:
-                continue
+        gen = self.data.G.bfs()
+        try:
+            next(prog)
+            next(gen)  # Skip the first fake target
+            target = gen.send(True)
 
-            table["target"] = target
-            exec = self.data.execution_index[target]
+            while True:
+                if target not in missing_packages:
+                    target = gen.send(True)
+                    continue
 
-            time.sleep(0.01)
-            table["status"] = "🟡 Installing..."
-            time.sleep(0.01)
-            table["details"] = self._display_setup(exec)
-            time.sleep(0.01)
+                table["target"] = target
+                exec = self.data.execution_index[target]
 
-            start_time = time.perf_counter()
-            result = install_target(self.data, target)
-            _time = time.perf_counter() - start_time
-            total_time += _time
-            table["time"] = f"{_time:.2f}s"
+                time.sleep(0.01)
+                table["status"] = "🟡 Installing..."
+                time.sleep(0.01)
+                table["details"] = self._display_setup(exec)
+                time.sleep(0.01)
 
-            if result is None:
-                table["status"] = "🟢 Installed"
-                status_result.installed.append(target)
-            else:
-                if result.returncode == 1:
-                    table["status"] = "🟡 Not installed"
-                    table["details"] = result.stdout.strip().replace("\n", " ")
-                    status_result.missing.append(target)
+                start_time = time.perf_counter()
+                result = install_target(self.data, target)
+                _time = time.perf_counter() - start_time
+                total_time += _time
+                table["time"] = f"{_time:.2f}s"
+
+                if result is None:
+                    table["status"] = "🟢 Installed"
+                    status_result.installed.append(target)
                 else:
                     table["status"] = "🔴 Error"
                     table["details"] = result.stderr.strip().replace("\n", " ")
+                    self.logger.log_setup(target, result.stdout, result.stderr)
                     status_result.errors.append(target)
+                table.next_row()
+
+                target = gen.send(result is None)
+
+        except StopIteration as e:
+            skipped: List[str] = e.value
+
+        for target in skipped:
+            table["target"] = target
+            table["status"] = "🟡 Skipped"
+            table["details"] = "Dependency failure"
             table.next_row()
 
         table.close()
@@ -212,8 +210,9 @@ class App:
         print("Install Report:")
         print()
         print(f"🟢 ({len(status_result.installed)}) targets installed")
-        print(f"🟡 ({len(status_result.missing)}) targets couldn't be installed")
+        print(f"🟡 ({len(skipped)}) targets skipped because of dependency failures")
         print(f"🔴 ({len(status_result.errors)}) targets failed because of errors")
+
         print()
         print(f"🕒 Total time: {total_time:.2f}s")
         print()

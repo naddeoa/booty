@@ -1,0 +1,20 @@
+a <- b c d
+a:
+    setup: exit 2
+    is_setup: false
+
+a2:
+    setup: exit 1
+    is_setup: false
+
+b:
+    setup: true
+    is_setup: false
+
+c:
+    setup: true
+    is_setup: false
+
+d:
+    setup: true
+    is_setup: false

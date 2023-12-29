@@ -46,7 +46,7 @@ class DependencyGraph:
 
         for package, deps in dependencies.items():
             if not deps:
-                builder.add_dependency(StartNode, package)
+                builder.add_dependency(package, StartNode)
             else:
                 for dep in deps:
                     builder.add_dependency(package, dep)
@@ -90,7 +90,12 @@ class DependencyGraph:
         """
         gen = self.bfs()
         try:
-            target = next(gen)
+            if skip_first:
+                next(gen)
+                target = gen.send(True)
+            else:
+                target = next(gen)
+
             while True:
                 yield target
                 target = gen.send(True)
@@ -130,7 +135,7 @@ class DependencyGraphBuilder:
         self.start_target: str = start_target
         self.dependencies: Dict[str, DependencyBuilder] = {start_target: DependencyBuilder(start_target, [])}
 
-    def add_dependency(self, from_target: str, to_target: str) -> "DependencyGraphBuilder":
+    def add_dependency(self, to_target: str, from_target: str) -> "DependencyGraphBuilder":
         if from_target not in self.dependencies:
             self.dependencies[from_target] = DependencyBuilder(from_target, [])
 
