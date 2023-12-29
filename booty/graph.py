@@ -33,7 +33,7 @@ class DependencyGraph:
     start: Dependency
     dependencies: Dict[str, Dependency]
 
-    def bst(self) -> Generator[Dependency, bool, Sequence[str]]:
+    def bfs(self) -> Generator[Dependency, bool, Sequence[str]]:
         to_visit: List[Dependency] = [self.start]
         visited: Set[str] = set()
         to_skip: Set[str] = set()
@@ -42,36 +42,51 @@ class DependencyGraph:
         while to_visit:
             current = to_visit.pop(0)
             visited.add(current.value)
-            print(f"Visiting {current.value}")
 
             # If current has any failed parents then skip it
             if current.value in to_skip:
-                print(f"Skipping {current.value}")
                 skipped_nodes.add(current.value)
-                for child in current.children:
-                    to_skip.add(child)
+                to_skip.update(current.children)
                 continue
 
-            success = yield current
-            print(f"Result: {success}")
+            success = yield current  # Signaled from the generator caller
+
             if not success:
-                for child in current.children:
-                    to_skip.add(child)
+                to_skip.update(current.children)
             else:
-                for child in current.children:
-                    if child in visited:
-                        continue
-                    print(f"Adding {child} to visit")
-                    to_visit.append(self.dependencies[child])
+                to_visit.extend([self.dependencies[child] for child in current.children if child not in visited])
 
         all_nodes = set(self.dependencies.keys())
         all_skipped = list(skipped_nodes.union(all_nodes.difference(visited)))
         all_skipped.sort()
         return all_skipped
 
-    # TODO make this not suck
-    def has_cycles(self) -> bool:
-        return False
+    def has_cycle(self) -> List[str]:
+        def _dfs(node: Dependency, visited: Set[str], stack: Dict[str, None]) -> List[str]:
+            visited.add(node.value)
+            stack[node.value] = None
+
+            for child in node.children:
+                if child not in visited:
+                    cycle = _dfs(self.dependencies[child], visited, stack)
+                    if cycle:
+                        return cycle
+                elif child in stack:
+                    return [*stack.keys(), child]
+
+            del stack[node.value]
+            return []
+
+        visited: Set[str] = set()
+        stack: Dict[str, None] = {}  # Apparently dicts preserve key ordering so this is a hacky list with fast lookup
+
+        for node in self.dependencies.values():
+            if node.value not in visited:
+                cycle = _dfs(node, visited, stack)
+                if cycle:
+                    return cycle
+
+        return []
 
 
 class DependencyGraphBuilder:

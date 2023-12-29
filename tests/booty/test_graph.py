@@ -4,7 +4,7 @@ from booty.graph import DependencyGraphBuilder
 
 def test_all_success():
     graph = DependencyGraphBuilder("a").add_dependency("a", "b").add_dependency("b", "c").add_dependency("c", "d").build()
-    gen = graph.bst()
+    gen = graph.bfs()
 
     targets: List[str] = []
     try:
@@ -18,12 +18,12 @@ def test_all_success():
     assert graph.start.value == "a"
     assert ["a", "b", "c", "d"] == targets
     assert [] == skipped
-    assert graph.has_cycles() is False
+    assert graph.has_cycle() == []
 
 
 def test_start_failure():
     graph = DependencyGraphBuilder("a").add_dependency("a", "b").add_dependency("b", "c").add_dependency("c", "d").build()
-    gen = graph.bst()
+    gen = graph.bfs()
 
     targets: List[str] = []
     try:
@@ -37,12 +37,12 @@ def test_start_failure():
     assert graph.start.value == "a"
     assert ["a"] == targets
     assert ["b", "c", "d"] == skipped
-    assert graph.has_cycles() is False
+    assert graph.has_cycle() == []
 
 
 def test_last_failure():
     graph = DependencyGraphBuilder("a").add_dependency("a", "b").add_dependency("b", "c").add_dependency("c", "d").build()
-    gen = graph.bst()
+    gen = graph.bfs()
 
     targets: List[str] = []
     try:
@@ -56,12 +56,12 @@ def test_last_failure():
     assert graph.start.value == "a"
     assert ["a", "b", "c"] == targets
     assert ["d"] == skipped
-    assert graph.has_cycles() is False
+    assert graph.has_cycle() == []
 
 
 def test_wide_graph():
     graph = DependencyGraphBuilder("a").add_dependency("a", "b").add_dependency("a", "c").add_dependency("a", "d").build()
-    gen = graph.bst()
+    gen = graph.bfs()
 
     targets: List[str] = []
     try:
@@ -76,12 +76,12 @@ def test_wide_graph():
     assert graph.start.value == "a"
     assert ["a", "b", "c", "d"] == targets
     assert [] == skipped
-    assert graph.has_cycles() is False
+    assert graph.has_cycle() == []
 
 
 def test_wide_graph_with_failure():
     graph = DependencyGraphBuilder("a").add_dependency("a", "b").add_dependency("a", "c").add_dependency("a", "d").build()
-    gen = graph.bst()
+    gen = graph.bfs()
 
     targets: List[str] = []
     try:
@@ -96,12 +96,12 @@ def test_wide_graph_with_failure():
     assert graph.start.value == "a"
     assert ["a", "b", "c", "d"] == targets
     assert [] == skipped
-    assert graph.has_cycles() is False
+    assert graph.has_cycle() == []
 
 
 def test_wide_graph_with_failure_start():
     graph = DependencyGraphBuilder("a").add_dependency("a", "b").add_dependency("a", "c").add_dependency("a", "d").build()
-    gen = graph.bst()
+    gen = graph.bfs()
 
     targets: List[str] = []
     try:
@@ -116,7 +116,7 @@ def test_wide_graph_with_failure_start():
     assert graph.start.value == "a"
     assert ["a"] == targets
     assert ["b", "c", "d"] == skipped
-    assert graph.has_cycles() is False
+    assert graph.has_cycle() == []
 
 
 def test_ancestor_failure():
@@ -136,12 +136,11 @@ def test_ancestor_failure():
         .add_dependency("a", "c")
         .add_dependency("c", "d")
         .add_dependency("b", "d")
-        .add_dependency("b", "d")
         .add_dependency("b", "f")
         .add_dependency("d", "e")
         .build()
     )
-    gen = graph.bst()
+    gen = graph.bfs()
 
     targets: List[str] = []
     try:
@@ -157,7 +156,7 @@ def test_ancestor_failure():
     assert graph.start.value == "a"
     assert ["a", "b", "c", "f"] == targets
     assert ["d", "e"] == skipped
-    assert graph.has_cycles() is False
+    assert graph.has_cycle() == []
 
 def test_ancestor_failure_other_parent():
     """
@@ -180,7 +179,7 @@ def test_ancestor_failure_other_parent():
         .add_dependency("d", "e")
         .build()
     )
-    gen = graph.bst()
+    gen = graph.bfs()
 
     targets: List[str] = []
     try:
@@ -196,26 +195,38 @@ def test_ancestor_failure_other_parent():
     assert graph.start.value == "a"
     assert ["a", "b", "c"] == targets
     assert ["d", "e", "f"] == skipped
-    assert graph.has_cycles() is False
-#
-# def test_cycle():
-#     graph = (
-#         DependencyGraphBuilder("a")
-#         .add_dependency("a", "b")
-#         .add_dependency("b", "c")
-#         .add_dependency("c", "a")
-#         .build()
-#     )
-#
-#     assert graph.has_cycles() is True
-#
-# def test_cycle_deeper():
-#     graph = (
-#         DependencyGraphBuilder("a")
-#         .add_dependency("a", "b")
-#         .add_dependency("b", "c")
-#         .add_dependency("c", "b")
-#         .build()
-#     )
-#
-#     assert graph.has_cycles() is True
+    assert graph.has_cycle() == []
+
+def test_cycle():
+    graph = (
+        DependencyGraphBuilder("a")
+        .add_dependency("a", "b")
+        .add_dependency("b", "c")
+        .add_dependency("c", "a")
+        .build()
+    )
+
+    assert graph.has_cycle() == ["a", "b", "c", "a"]
+
+def test_cycle_deeper():
+    graph = (
+        DependencyGraphBuilder("a")
+        .add_dependency("a", "b")
+        .add_dependency("b", "c")
+        .add_dependency("c", "b")
+        .build()
+    )
+
+    assert graph.has_cycle() == ["a", "b", "c", "b"]
+
+def test_cycle_wide():
+    graph = (
+        DependencyGraphBuilder("a")
+        .add_dependency("a", "b")
+        .add_dependency("a", "c")
+        .add_dependency("b", "c")
+        .add_dependency("c", "b")
+        .build()
+    )
+
+    assert graph.has_cycle() == ["a", "b", "c", "b"]
