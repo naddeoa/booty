@@ -46,14 +46,23 @@ jobs:
           echo "${{ secrets.DOCKER_PRIVATE_SSH_KEY }}" > ./ssh/id_rsa
           echo "${{ secrets.DOCKER_KNOWN_HOSTS }}" > ./ssh/known_hosts
 
-      - name: Build main Docker container
+      - name: Build Docker container with booty wheel
         uses: docker/build-push-action@v2
         with:
           context: .
           file: ./Dockerfile
           load: true
           push: false
-          tags: booty/test${{ github.sha }}
+          tags: booty/test-wheel${{ github.sha }}
+
+      - name: Build Docker container with booty binary
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile.binary
+          load: true
+          push: false
+          tags: booty/test-binary${{ github.sha }}
 
       # The build host is running out of disk space
       - name: Delete docker images and cache

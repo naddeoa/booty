@@ -3,7 +3,7 @@ binary = dist/booty/booty
 src = $(shell find $(project) -name '*.py')
 
 .PHONY: all test run run-docker format format-fix lint lint-fix fix debug docker run-docker build build-docker
-.PHONY: build-binary-linux build-binary-mac build-docker-base
+.PHONY: build-binary-linux build-binary-mac build-docker-base clean
 
 all: build $(binary)
 
@@ -20,6 +20,9 @@ build-docker:  # Build the test docker image.
 build-docker-base:  ## Build the base docker image for integ testing.
 	docker build . -f Dockerfile.base -t naddeoa/booty:ubuntu22.04
 
+clean:
+	rm -rf dist
+
 build-binary-linux:  # Build the binary variant of booty via pyinstaller for linux.
 	poetry run pyinstaller ./booty/cli.py -n booty_linux_x86_64 -y \
 		--exclude-module pandas \
@@ -27,6 +30,7 @@ build-binary-linux:  # Build the binary variant of booty via pyinstaller for lin
 		--exclude-module pytest \
 		--exclude-module pygments \
 		--onefile \
+		--strip \
 		--exclude-module multiprocessing.util
 
 build-binary-mac:  # Build the binary variant of booty via pyinstaller for mac.
@@ -37,6 +41,7 @@ build-binary-mac:  # Build the binary variant of booty via pyinstaller for mac.
 		--exclude-module pytest \
 		--exclude-module pygments \
 		--onefile \
+		--strip \
 		--exclude-module multiprocessing.util
 
 build-binary-mac-arm:  # Build the binary variant of booty via pyinstaller for arm mac.
@@ -47,6 +52,7 @@ build-binary-mac-arm:  # Build the binary variant of booty via pyinstaller for a
 		--exclude-module pytest \
 		--exclude-module pygments \
 		--onefile \
+		--strip \
 		--exclude-module multiprocessing.util
 
 build-binary-mac-universal:  # Build the binary variant of booty via pyinstaller for arm mac.
@@ -57,6 +63,7 @@ build-binary-mac-universal:  # Build the binary variant of booty via pyinstaller
 		--exclude-module pytest \
 		--exclude-module pygments \
 		--onefile \
+		--strip \
 		--exclude-module multiprocessing.util
 
 ##

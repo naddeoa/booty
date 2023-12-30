@@ -18,15 +18,12 @@ booty = "booty.cli:cli"
 [tool.poetry.dependencies]
 python = ">=3.9, <3.13"
 lark = "^1.1.8"
-networkx = "^3.2.1"
 click = "^8.1.7"
 progress-table = "^0.1.27"
 
 
 [tool.poetry.group.dev.dependencies]
 pyright = "^1.1.338"
-black = "^23.11.0"
-autoflake = "^2.2.1"
 ruff = "^0.1.7"
 pytest = "^7.4.3"
 debugpy = "^1.8.0"
