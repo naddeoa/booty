@@ -1,12 +1,9 @@
-from booty.dependencies import bfs_iterator, has_cycles
-from booty.execute import SystemconfData
+from booty.execute import BootyData
 from booty.types import RecipeInvocation
 
 
-def validate(data: SystemconfData) -> None:
-    bst_iterator = bfs_iterator(data.G)
-
-    for target in bst_iterator:
+def validate(data: BootyData) -> None:
+    for target in data.G.iterator():
         exec = data.execution_index.get(target)
         if exec is None:
             raise Exception(f"Missing definition for target '{target}', don't know how to install.")
@@ -29,9 +26,9 @@ def validate(data: SystemconfData) -> None:
             if len(exec["is_setup"]) == 0:
                 raise Exception(f"Executable '{target}' has empty is_setup, don't know how to test for install status.")
 
-    cycles = has_cycles(data.G)
-    if len(cycles) > 0:
-        raise Exception(f"Cycles detected in dependency graph, cannot continue. {cycles}")
+    cycle = data.G.find_first_cycle()
+    if cycle:
+        raise Exception(f"Cycles detected in dependency graph, cannot continue. {cycle}")
 
     # validate that all recipe invocations ivoke recipe that exist
     for target, exec in data.execution_index.items():

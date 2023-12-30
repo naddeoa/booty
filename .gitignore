@@ -7,3 +7,4 @@ ssh/
 dist/
 build/
 *.spec
+logs/

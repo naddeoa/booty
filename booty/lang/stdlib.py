@@ -11,7 +11,8 @@ recipe apt(packages):
 
 recipe ppa(name):
     setup:
-        sudo add-apt-repository $((name))
+        apt(software-properties-common)
+        sudo add-apt-repository -y $((name))
         sudo apt update
     is_setup: grep $((name)) /etc/apt/sources.list
 
