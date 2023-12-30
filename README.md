@@ -257,7 +257,10 @@ There are a lot of good things about make though. My favorite relevant parts are
 Some features that might be useful. If you feel up to contributing then these could be a good starting place.
 
 - Block child target installs if a dependency fails first. It will proceed today and most likely fail for that target anyway.
+- Remove systemconf references
 
 - Global variables. This would probably look just like make variables.
 - Windows support. For all I know it already works, but I don't use Windows. It would be good to get a binary building for Windows users.
 - Confirm the mac binaries work. I only use Linux personally.
+- Timeouts for the installs
+- Preview current line of stdout in the details window
