@@ -87,16 +87,16 @@ class RecipeDefinition:
         recipes: Dict[str, "RecipeDefinition"],
         method: Literal["setup", "is_setup"],
     ) -> None:
-        for command in self._iter_commands(args, executables, recipes, method):
+        for command in self.iter_commands(args, executables, recipes, method):
             subprocess.run(["bash", "-c", command], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
     def get_setup_commands(self, args: Sequence[Sequence[str]], recipes: Dict[str, "RecipeDefinition"]) -> List[str]:
-        return list(self._iter_commands(args, self.defs["setup"], recipes, method="setup"))
+        return list(self.iter_commands(args, self.defs["setup"], recipes, method="setup"))
 
     def get_is_setup_commands(self, args: Sequence[Sequence[str]], recipes: Dict[str, "RecipeDefinition"]) -> List[str]:
-        return list(self._iter_commands(args, self.defs["is_setup"], recipes, method="is_setup"))
+        return list(self.iter_commands(args, self.defs["is_setup"], recipes, method="is_setup"))
 
-    def _iter_commands(
+    def iter_commands(
         self,
         args: Sequence[Sequence[str]],
         executables: List[Executable],

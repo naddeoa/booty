@@ -7,7 +7,9 @@ from booty.target_logger import TargetLogger
 
 
 @click.command()
-@click.option("-c", "--config", type=str, required=False, help="Path to the install.sysc file", default="./install.booty")
+@click.option(
+    "-c", "--config", type=str, required=False, help="Path to the install.sysc file. Defaults to ./install.booty", default="./install.booty"
+)
 @click.option("-s", "--status", type=bool, is_flag=True, required=False, help="Check the status of all known targets")
 @click.option("-i", "--install", type=bool, is_flag=True, required=False, help="Install all uninstalled targets")
 @click.option("-d", "--debug", type=bool, is_flag=True, required=False, help="See the AST of the config file")

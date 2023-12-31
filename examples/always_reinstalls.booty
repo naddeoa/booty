@@ -8,7 +8,9 @@ recipe always_install():
 start <- a b c d e f g h i j k l m
 start: always_install()
 
-a: always_install()
+a:
+    setup: sudo apt-get update
+    is_setup:always_install()
 
 b -> a
 b: always_install()

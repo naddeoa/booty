@@ -5,13 +5,14 @@ from typing import Dict, List, Literal
 
 from rich.box import SIMPLE
 from rich.text import Text
+from rich.tree import Tree
 from rich.table import Table
 from rich.console import Group
 from rich.live import Live
 from rich.progress import Progress
 
 from booty.ast_util import get_dependencies, get_executable_index, get_recipe_definition_index
-from booty.execute import BootyData, check_target_status, install_target
+from booty.execute import BootyData, CommandExecutor, check_target_status
 from booty.graph import DependencyGraph
 from booty.parser import parse
 from booty.target_logger import TargetLogger
@@ -70,19 +71,17 @@ class App:
         """
         List the install status of each target
         """
-        largest_target_name = max([len(t) for t in self.data.execution_index.keys()])
         dependency_strings: Dict[str, str] = {
             target: ", ".join(deps) if deps else "-" for target, deps in self.data.dependency_index.items()
         }
-        largest_dependency_name = max([len(t) for t in dependency_strings.values()])
 
         table = Table(title="Target Status", show_header=True, show_edge=False, title_style="bold", box=SIMPLE)
 
-        table.add_column("Target", no_wrap=True, width=max(largest_target_name + 2, 6))
-        table.add_column("Dependencies", width=max(largest_dependency_name + 2, 12))
+        table.add_column("Target", no_wrap=True, width=20)
+        table.add_column("Dependencies", width=20)
         table.add_column("Status", width=20)
         table.add_column("Details", width=70)
-        table.add_column("Time", justify="right", width=15)
+        table.add_column("Time", justify="right", width=10)
 
         overall_progress = Progress()
         overall_id = overall_progress.add_task("Status", total=len(self.data.G.dependencies.keys()))
@@ -91,7 +90,7 @@ class App:
         total_time = 0.0
 
         group = Group(table, overall_progress)
-        with Live(group, refresh_per_second=10):
+        with Live(group, refresh_per_second=4):
             for target in self.data.G.iterator():
                 deps_string = dependency_strings[target]
 
@@ -135,13 +134,12 @@ class App:
         """
         Install all missing targets and attempt to install the ones that failed status check.
         """
-        largest_target_name = max([len(t) for t in [*status_result.missing, *status_result.errors]])
 
-        table = Table(title="Install Status", show_header=True, show_edge=False, title_style="bold", box=SIMPLE)
-        table.add_column("Target", no_wrap=True, width=largest_target_name + 2)
+        table = Table(title="Setup Status", show_header=True, show_edge=False, title_style="bold", box=SIMPLE)
+        table.add_column("Target", no_wrap=True, width=20)
         table.add_column("Status", width=20)
-        table.add_column("Details", width=70)
-        table.add_column("Time", justify="right", width=20)
+        table.add_column("Details", width=93, no_wrap=True)
+        table.add_column("Time", justify="right", width=10)
 
         overall_progress = Progress()
         overall_id = overall_progress.add_task("Status", total=len(self.data.G.dependencies.keys()))
@@ -152,7 +150,7 @@ class App:
         total_time = 0.0
         status_result = StatusResult()
         gen = self.data.G.bfs()
-        with Live(group, refresh_per_second=10):
+        with Live(group, refresh_per_second=4):
             try:
                 next(gen)  # Skip the first fake target
                 target = gen.send(True)
@@ -164,30 +162,50 @@ class App:
 
                     target_text = Text(target)
                     status_text = Text("🟡 Installing...")
-                    details_text = Text(self._display_setup(self.data.execution_index[target]))
+
+                    detail_tree = Tree("", hide_root=True)
+                    current_cmd_display = self._display_setup(self.data.execution_index[target])
+                    detail_tree.add(current_cmd_display)
+                    stdout_branch = detail_tree.add("stdout")
+                    stderr_branch = detail_tree.add("stderr")
+
+                    details_stdout = Text("", style="dim")
+                    stdout_branch.add(details_stdout)
+
+                    details_stderr = Text("", style="red")
+                    stderr_branch.add(details_stderr)
+
                     time_text = Text("")  # Make update in real time
-                    table.add_row(target_text, status_text, details_text, time_text)
+                    table.add_row(target_text, status_text, detail_tree, time_text)
 
                     target_text.plain = target
 
-                    details_text.plain = self._display_setup(self.data.execution_index[target])
+                    # details_text.plain = self._display_setup(self.data.execution_index[target])
 
                     start_time = time.perf_counter()
-                    result = install_target(self.data, target)
-                    _time = time.perf_counter() - start_time
-                    total_time += _time
-                    time_text.plain = f"{_time:.2f}s"
 
-                    if result is None:
+                    cmd = CommandExecutor(self.data, target, "setup")
+                    for _ in cmd.execute():
+                        time_text.plain = f"{time.perf_counter() - start_time:.2f}s"
+                        details_stdout.plain = cmd.latest_stdout()
+                        details_stderr.plain = cmd.latest_stderr()
+
+                    cmd_time = time.perf_counter() - start_time
+                    time_text.plain = f"{cmd_time:.2f}s"
+                    total_time += cmd_time
+
+                    if cmd.code == 0:
                         status_result.installed.append(target)
                         status_text.plain = "🟢 Installed"
+                        detail_tree.children = []
+                        detail_tree.add(current_cmd_display)
+
                     else:
                         status_text.plain = "🔴 Error"
-                        details_text.plain = result.stderr.strip().replace("\n", " ")
-                        self.logger.log_setup(target, result.stdout, result.stderr)
+                        self.logger.log_setup(target, cmd.all_stdout(), cmd.all_stderr())
                         status_result.errors.append(target)
 
-                    target = gen.send(result is None)
+                    target = gen.send(cmd.code == 0)
                     overall_progress.advance(overall_id)
 
             except StopIteration as e:
