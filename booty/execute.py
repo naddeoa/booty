@@ -18,7 +18,7 @@ class BootyData:
 
 def check_status_all(data: BootyData) -> Dict[str, Optional[CalledProcessError]]:
     results: Dict[str, Optional[CalledProcessError]] = {}
-    for target in data.G.iterator():
+    for target in list(data.G.iterator()):
         # print(target)
         exec = data.execution_index[target]
 

@@ -1,7 +1,14 @@
 from dataclasses import dataclass, field
 import time
 from pprint import pprint
-from typing import Any, Dict, Generator, List, Literal, cast
+from typing import Dict, List, Literal
+
+from rich.box import SIMPLE
+from rich.text import Text
+from rich.table import Table
+from rich.console import Group
+from rich.live import Live
+from rich.progress import Progress
 
 from booty.ast_util import get_dependencies, get_executable_index, get_recipe_definition_index
 from booty.execute import BootyData, check_target_status, install_target
@@ -11,11 +18,6 @@ from booty.target_logger import TargetLogger
 from booty.types import Executable, RecipeInvocation
 from booty.validation import validate
 from booty.lang.stdlib import stdlib
-
-from progress_table import ProgressTable
-
-# Monkeypatch SymbolsUnicodeBare.embedded_pbar_filled to be -
-# SymbolsUnicodeBare.embedded_pbar_filled = "─"
 
 
 @dataclass
@@ -74,60 +76,58 @@ class App:
         }
         largest_dependency_name = max([len(t) for t in dependency_strings.values()])
 
-        table = ProgressTable(
-            default_column_alignment="left",
-            table_style="bare",
-            embedded_progress_bar=True,
-            refresh_rate=100,
-            reprint_header_every_n_rows=60,
-        )
-        table.add_column("target", width=largest_target_name + 2)  # type: ignore[reportUnknownMemberType]
-        table.add_column("dependencies", width=largest_dependency_name + 2)  # type: ignore[reportUnknownMemberType]
-        table.add_column("status", width=15)  # type: ignore[reportUnknownMemberType]
-        table.add_column("details", width=70)  # type: ignore[reportUnknownMemberType]
-        table.add_column("time", alignment="right", width=15)  # type: ignore[reportUnknownMemberType]
+        table = Table(title="Target Status", show_header=True, show_edge=False, title_style="bold", box=SIMPLE)
 
-        print("Getting target status:")
-        prog: Generator[str, Any, None] = cast(Generator[str, Any, None], table(list(self.data.G.iterator())))
+        table.add_column("Target", no_wrap=True, width=max(largest_target_name + 2, 6))
+        table.add_column("Dependencies", width=max(largest_dependency_name + 2, 12))
+        table.add_column("Status", width=20)
+        table.add_column("Details", width=70)
+        table.add_column("Time", justify="right", width=15)
+
+        overall_progress = Progress()
+        overall_id = overall_progress.add_task("Status", total=len(self.data.G.dependencies.keys()))
+
         status_result = StatusResult()
         total_time = 0.0
-        for target in prog:
-            deps_string = dependency_strings[target]
-            table["target"] = target
-            table["dependencies"] = deps_string
 
-            exec = self.data.execution_index[target]
-            time.sleep(0.01)
-            table["status"] = "🟡 Checking..."
-            time.sleep(0.01)
-            table["details"] = self._display_is_setup(exec)
-            time.sleep(0.01)
+        group = Group(table, overall_progress)
+        with Live(group, refresh_per_second=10):
+            for target in self.data.G.iterator():
+                deps_string = dependency_strings[target]
 
-            start_time = time.perf_counter()
-            result = check_target_status(self.data, target)
-            _time = time.perf_counter() - start_time
-            total_time += _time
-            table["time"] = f"{_time:.2f}s"
+                target_text = Text(target)
+                dependency_text = Text(deps_string)
+                status_text = Text("🟡 Checking...")
+                details_text = Text(self._display_is_setup(self.data.execution_index[target]))
+                time_text = Text("")  # Make update in real time
 
-            if result is None:
-                table["status"] = "🟢 Installed"
-                status_result.installed.append(target)
-            else:
-                if result.returncode == 1:
-                    table["status"] = "🟡 Not installed"
-                    table["details"] = result.stdout if result.stdout else table["details"]
-                    status_result.missing.append(target)
-                    self.logger.log_is_setup(target, result.stdout, result.stderr)
+                table.add_row(target_text, dependency_text, status_text, details_text, time_text)
+
+                start_time = time.perf_counter()
+                result = check_target_status(self.data, target)
+                _time = time.perf_counter() - start_time
+                total_time += _time
+                time_text.plain = f"{_time:.2f}s"
+
+                if result is None:
+                    status_result.installed.append(target)
+                    status_text.plain = "🟢 Installed"
                 else:
-                    # TODO send PR to library to fix the formatting with unicode/emoji. Length is wrong.
-                    table["status"] = "🔴 Error"
-                    table["details"] = result.stderr.strip()
-                    status_result.errors.append(target)
-                    self.logger.log_is_setup(target, result.stdout, result.stderr)
+                    if result.returncode == 1:
+                        status_result.missing.append(target)
+                        status_text.plain = "🟡 Not installed"
+                        details_text.plain = result.stdout if result.stdout else details_text.plain
+                        self.logger.log_is_setup(target, result.stdout, result.stderr)
+                    else:
+                        status_result.errors.append(target)
+                        status_text.plain = "🔴 Error"
+                        details_text.plain = result.stderr.strip()
+                        self.logger.log_is_setup(target, result.stdout, result.stderr)
 
-            table.next_row()
+                overall_progress.advance(overall_id)
 
-        table.close()
+            overall_progress.update(overall_id, completed=True)
+            overall_progress.update(overall_id, visible=False)
         status_result.total_time = total_time
         return status_result
 
@@ -137,73 +137,71 @@ class App:
         """
         largest_target_name = max([len(t) for t in [*status_result.missing, *status_result.errors]])
 
-        table = ProgressTable(
-            default_column_alignment="left",
-            table_style="bare",
-            embedded_progress_bar=True,
-            refresh_rate=100,
-            reprint_header_every_n_rows=60,
-        )
-        table.add_column("target", width=largest_target_name + 2)  # type: ignore[reportUnknownMemberType]
-        table.add_column("status", width=15)  # type: ignore[reportUnknownMemberType]
-        table.add_column("details", width=100)  # type: ignore[reportUnknownMemberType]
-        table.add_column("time", alignment="right", width=15)  # type: ignore[reportUnknownMemberType]
+        table = Table(title="Install Status", show_header=True, show_edge=False, title_style="bold", box=SIMPLE)
+        table.add_column("Target", no_wrap=True, width=largest_target_name + 2)
+        table.add_column("Status", width=20)
+        table.add_column("Details", width=70)
+        table.add_column("Time", justify="right", width=20)
+
+        overall_progress = Progress()
+        overall_id = overall_progress.add_task("Status", total=len(self.data.G.dependencies.keys()))
         missing_packages = set([*status_result.missing, *status_result.errors])
 
-        prog: Generator[str, Any, None] = cast(Generator[str, Any, None], table(len(self.data.G.dependencies.keys())))
-
-        print("Installing targets:")
+        group = Group(table, overall_progress)
 
         total_time = 0.0
         status_result = StatusResult()
         gen = self.data.G.bfs()
-        try:
-            next(prog)
-            next(gen)  # Skip the first fake target
-            target = gen.send(True)
+        with Live(group, refresh_per_second=10):
+            try:
+                next(gen)  # Skip the first fake target
+                target = gen.send(True)
 
-            while True:
-                if target not in missing_packages:
-                    target = gen.send(True)
-                    continue
+                while True:
+                    if target not in missing_packages:
+                        target = gen.send(True)
+                        continue
 
-                table["target"] = target
-                exec = self.data.execution_index[target]
+                    target_text = Text(target)
+                    status_text = Text("🟡 Installing...")
+                    details_text = Text(self._display_setup(self.data.execution_index[target]))
+                    time_text = Text("")  # Make update in real time
+                    table.add_row(target_text, status_text, details_text, time_text)
 
-                time.sleep(0.01)
-                table["status"] = "🟡 Installing..."
-                time.sleep(0.01)
-                table["details"] = self._display_setup(exec)
-                time.sleep(0.01)
+                    target_text.plain = target
 
-                start_time = time.perf_counter()
-                result = install_target(self.data, target)
-                _time = time.perf_counter() - start_time
-                total_time += _time
-                table["time"] = f"{_time:.2f}s"
+                    details_text.plain = self._display_setup(self.data.execution_index[target])
 
-                if result is None:
-                    table["status"] = "🟢 Installed"
-                    status_result.installed.append(target)
-                else:
-                    table["status"] = "🔴 Error"
-                    table["details"] = result.stderr.strip().replace("\n", " ")
-                    self.logger.log_setup(target, result.stdout, result.stderr)
-                    status_result.errors.append(target)
-                table.next_row()
+                    start_time = time.perf_counter()
+                    result = install_target(self.data, target)
+                    _time = time.perf_counter() - start_time
+                    total_time += _time
+                    time_text.plain = f"{_time:.2f}s"
 
-                target = gen.send(result is None)
+                    if result is None:
+                        status_result.installed.append(target)
+                        status_text.plain = "🟢 Installed"
+                    else:
+                        status_text.plain = "🔴 Error"
+                        details_text.plain = result.stderr.strip().replace("\n", " ")
+                        self.logger.log_setup(target, result.stdout, result.stderr)
+                        status_result.errors.append(target)
 
-        except StopIteration as e:
-            skipped: List[str] = e.value
+                    target = gen.send(result is None)
+                    overall_progress.advance(overall_id)
 
-        for target in skipped:
-            table["target"] = target
-            table["status"] = "🟡 Skipped"
-            table["details"] = "Dependency failure"
-            table.next_row()
+            except StopIteration as e:
+                skipped: List[str] = e.value
 
-        table.close()
+            for target in skipped:
+                target_text = Text(target)
+                status_text = Text("🟡 Skipped")
+                details_text = Text("Dependency failure")
+                time_text = Text("")
+                table.add_row(target_text, status_text, details_text, time_text)
+
+            overall_progress.update(overall_id, completed=True)
+            overall_progress.update(overall_id, visible=False)
 
         print()
         print()

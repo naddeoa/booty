@@ -19,7 +19,7 @@ booty = "booty.cli:cli"
 python = ">=3.9, <3.13"
 lark = "^1.1.8"
 click = "^8.1.7"
-progress-table = "^0.1.27"
+rich = "^13.7.0"
 
 
 [tool.poetry.group.dev.dependencies]
