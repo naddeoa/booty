@@ -25,11 +25,11 @@ single_line_def.1: implements ":" (shell_line | recipe_invocation) _NEW_LINE*
 
 multi_line_def.1: implements ":" _NEW_LINE def_body _NEW_LINE*
 
-recipe_invocation.1: NAME "(" recipe_parameter_list ")" _NEW_LINE
+recipe_invocation.1: NAME "(" recipe_parameter_list? ")" _NEW_LINE
 
 recipe_parameter_list: recipe_parameter ("," recipe_parameter)*
 
-recipe_parameter: (INVOCATION_ARGS | _NEW_LINE)*
+recipe_parameter: (INVOCATION_ARGS | _NEW_LINE)+
 
 implements: IMPLEMENTS_NAME
 

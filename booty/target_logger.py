@@ -16,12 +16,10 @@ class TargetLogger:
         with open(f"{dir}/{target}_stdout.log", "w") as f:
             f.write("=== stdout: ===\n")
             f.write(stdout)
-            print(stdout)
 
         with open(f"{dir}/{target}_stderr.log", "w") as f:
             f.write("=== stderr: ===\n")
             f.write(stderr)
-            print(stderr)
 
     def log_setup(self, target: str, stdout: str, stderr: str):
         self.log(target, "setup", stdout, stderr)

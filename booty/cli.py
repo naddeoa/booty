@@ -34,9 +34,8 @@ def cli(config: str, yes: bool, log_dir: str, status: bool = True, install: bool
         if status_result.missing or status_result.errors:
             if not yes:
                 click.confirm("Install all missing targets?", abort=True)
-                print()
-                print()
-                print()
+            print()
+            print()
             install_result = app.install_missing(status_result)
             if install_result.errors:
                 # Don't consider `missing` to be an error. Some status checks may require logging in/out.
