@@ -256,9 +256,7 @@ There are a lot of good things about make though. My favorite relevant parts are
 
 Some features that might be useful. If you feel up to contributing then these could be a good starting place.
 
-- Preview current line of stdout in the details window
 - Timeouts for the installs
-
 - Global variables. This would probably look just like make variables.
 - Windows support. For all I know it already works, but I don't use Windows. It would be good to get a binary building for Windows users.
 - Confirm the mac binaries work. I only use Linux personally.
