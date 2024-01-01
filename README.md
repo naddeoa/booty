@@ -47,15 +47,22 @@ You'll see a table that shows the status of all of your targets and you'll be pr
 display in real-time as a second table with a row for each target getting setup.
 
 ```
-Usage: booty_linux_x86_64 [OPTIONS]
+Usage: python -m booty.cli [OPTIONS]
 
 Options:
-  -c, --config TEXT  Path to the install.sysc file
-  -s, --status       Check the status of all known targets
-  -i, --install      Install all uninstalled targets
-  -d, --debug        See the AST of the config file
-  -y, --yes          Don't prompt for confirmation
-  --help             Show this message and exit.
+  -c, --config TEXT   Path to the install.sysc file. Defaults to
+                      ./install.booty
+  -s, --status        Check the status of all known targets
+  -i, --install       Install all uninstalled targets
+  -d, --debug         See the AST of the config file
+  -l, --log-dir TEXT  Where to store logs. Defaults to ./logs
+  -s, --no-sudo       Don't allow booty to prompt with sudo -v. Instead, you
+                      can manually run sudo -v before using booty to cache
+                      credentials for any targets that use sudo. By default,
+                      booty runs sudo -v upfront if you use sudo in any
+                      targets.
+  -y, --yes           Don't prompt for confirmation
+  --help              Show this message and exit.
 ```
 
 # Testing/Dry Runs
