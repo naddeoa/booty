@@ -177,9 +177,9 @@ Running `sudo -v` to cache sudo credentials. You can disable this behavior with 
         table.add_column("Details", width=93, no_wrap=True)
         table.add_column("Time", justify="right", width=10)
 
-        overall_progress = Progress()
-        overall_id = overall_progress.add_task("Status", total=len(self.data.G.dependencies.keys()))
         missing_packages = set([*status_result.missing, *status_result.errors])
+        overall_progress = Progress()
+        overall_id = overall_progress.add_task("Status", total=len(missing_packages))
 
         group = Group(table, overall_progress)
 
