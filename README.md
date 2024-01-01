@@ -47,7 +47,7 @@ You'll see a table that shows the status of all of your targets and you'll be pr
 display in real-time as a second table with a row for each target getting setup.
 
 ```
-Usage: python -m booty.cli [OPTIONS]
+Usage: booty [OPTIONS]
 
 Options:
   -c, --config TEXT   Path to the install.sysc file. Defaults to
@@ -264,11 +264,3 @@ There are a lot of good things about make though. My favorite relevant parts are
 - Easy, independent dependency specification
 - Plain old shell for each target definition.
 
-# TODO
-
-Some features that might be useful. If you feel up to contributing then these could be a good starting place.
-
-- Timeouts for the installs
-- Global variables. This would probably look just like make variables.
-- Windows support. For all I know it already works, but I don't use Windows. It would be good to get a binary building for Windows users.
-- Confirm the mac binaries work. I only use Linux personally.
