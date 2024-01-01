@@ -15,7 +15,6 @@ from booty.target_logger import TargetLogger
 @click.option("-d", "--debug", type=bool, is_flag=True, required=False, help="See the AST of the config file")
 @click.option("-l", "--log-dir", type=str, required=False, help="Where to store logs. Defaults to ./logs", default="./logs")
 @click.option(
-    "-s",
     "--no-sudo",
     type=bool,
     is_flag=True,
