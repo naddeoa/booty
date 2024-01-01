@@ -11,6 +11,7 @@ RUN chmod 600 .ssh/id_rsa
 COPY ./examples/install.booty ./
 
 ENV PATH="/home/myuser/.local/bin:${PATH}"
-RUN booty -i -y
+# Don't prompt for sudo password in CI. Even when the user is in the sudoers file it becomes an interactive prompt.
+RUN booty -i -y --no-sudo
 
 CMD ["fish"]

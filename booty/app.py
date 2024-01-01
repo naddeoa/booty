@@ -1,24 +1,28 @@
 from dataclasses import dataclass, field
 import time
+import subprocess
 from pprint import pprint
 from typing import Dict, List, Literal
 
 from rich.box import SIMPLE
 from rich.text import Text
-from rich.tree import Tree
 from rich.table import Table
 from rich.console import Group
 from rich.live import Live
 from rich.progress import Progress
 
 from booty.ast_util import get_dependencies, get_executable_index, get_recipe_definition_index
-from booty.execute import BootyData, CommandExecutor, check_target_status
+from booty.execute import BootyData, CommandExecutor, get_commands
 from booty.graph import DependencyGraph
 from booty.parser import parse
 from booty.target_logger import TargetLogger
 from booty.types import Executable, RecipeInvocation
+from booty.ui import StdTree
 from booty.validation import validate
 from booty.lang.stdlib import stdlib
+
+
+_REFRESH_RATE = 8
 
 
 @dataclass
@@ -67,6 +71,30 @@ class App:
         validate(conf)
         return conf
 
+    def check_sudo_usage(self) -> None:
+        sudo_targets: List[str] = []
+
+        for target, commands in get_commands(self.data, "is_setup").items():
+            for cmd in commands:
+                if "sudo" in cmd:
+                    sudo_targets.append(target)
+
+        for target, commands in get_commands(self.data, "setup").items():
+            for cmd in commands:
+                if "sudo" in cmd:
+                    sudo_targets.append(target)
+
+        if sudo_targets:
+            # run sudo -v to make sure the user has sudo access
+            targets = ", ".join(sudo_targets)
+            print(
+                f"""
+Detected sudo in targets: '{targets}'.
+Running `sudo -v` to cache sudo credentials. You can disable this behavior with `booty --no-sudo`. See `booty --help` for details.
+"""
+            )
+            subprocess.run(["sudo", "-v"], check=True)
+
     def status(self) -> StatusResult:
         """
         List the install status of each target
@@ -80,7 +108,7 @@ class App:
         table.add_column("Target", no_wrap=True, width=20)
         table.add_column("Dependencies", width=20)
         table.add_column("Status", width=20)
-        table.add_column("Details", width=70)
+        table.add_column("Details", width=70, no_wrap=True)
         table.add_column("Time", justify="right", width=10)
 
         overall_progress = Progress()
@@ -90,38 +118,45 @@ class App:
         total_time = 0.0
 
         group = Group(table, overall_progress)
-        with Live(group, refresh_per_second=4):
+        with Live(group, refresh_per_second=_REFRESH_RATE):
             for target in self.data.G.iterator():
                 deps_string = dependency_strings[target]
 
                 target_text = Text(target)
                 dependency_text = Text(deps_string)
                 status_text = Text("🟡 Checking...")
-                details_text = Text(self._display_is_setup(self.data.execution_index[target]))
+
+                tree = StdTree(self._display_setup(self.data.execution_index[target]))
+
                 time_text = Text("")  # Make update in real time
 
-                table.add_row(target_text, dependency_text, status_text, details_text, time_text)
+                table.add_row(target_text, dependency_text, status_text, tree.tree, time_text)
 
                 start_time = time.perf_counter()
-                result = check_target_status(self.data, target)
-                _time = time.perf_counter() - start_time
-                total_time += _time
-                time_text.plain = f"{_time:.2f}s"
+                cmd = CommandExecutor(self.data, target, "is_setup")
+                for _ in cmd.execute():
+                    time_text.plain = f"{time.perf_counter() - start_time:.2f}s"
 
-                if result is None:
+                target_time = time.perf_counter() - start_time
+                total_time += target_time
+                time_text.plain = f"{target_time:.2f}s"
+
+                if cmd.code == 0:
                     status_result.installed.append(target)
                     status_text.plain = "🟢 Installed"
+                    tree.reset()
                 else:
-                    if result.returncode == 1:
+                    tree.set_stdout(cmd.latest_stdout())
+                    tree.set_stderr(cmd.latest_stderr())
+
+                    if cmd.code == 1:
                         status_result.missing.append(target)
                         status_text.plain = "🟡 Not installed"
-                        details_text.plain = result.stdout if result.stdout else details_text.plain
-                        self.logger.log_is_setup(target, result.stdout, result.stderr)
+                        self.logger.log_is_setup(target, cmd.all_stdout(), cmd.all_stderr())
                     else:
                         status_result.errors.append(target)
                         status_text.plain = "🔴 Error"
-                        details_text.plain = result.stderr.strip()
-                        self.logger.log_is_setup(target, result.stdout, result.stderr)
+                        self.logger.log_is_setup(target, cmd.all_stdout(), cmd.all_stderr())
 
                 overall_progress.advance(overall_id)
 
@@ -150,7 +185,7 @@ class App:
         total_time = 0.0
         status_result = StatusResult()
         gen = self.data.G.bfs()
-        with Live(group, refresh_per_second=4):
+        with Live(group, refresh_per_second=_REFRESH_RATE):
             try:
                 next(gen)  # Skip the first fake target
                 target = gen.send(True)
@@ -163,32 +198,17 @@ class App:
                     target_text = Text(target)
                     status_text = Text("🟡 Installing...")
 
-                    detail_tree = Tree("", hide_root=True)
-                    current_cmd_display = self._display_setup(self.data.execution_index[target])
-                    detail_tree.add(current_cmd_display)
-                    stdout_branch = detail_tree.add("stdout")
-                    stderr_branch = detail_tree.add("stderr")
-
-                    details_stdout = Text("", style="dim")
-                    stdout_branch.add(details_stdout)
-
-                    details_stderr = Text("", style="red")
-                    stderr_branch.add(details_stderr)
-
+                    tree = StdTree(self._display_setup(self.data.execution_index[target]))
                     time_text = Text("")  # Make update in real time
-                    table.add_row(target_text, status_text, detail_tree, time_text)
-
+                    table.add_row(target_text, status_text, tree.tree, time_text)
                     target_text.plain = target
-
-                    # details_text.plain = self._display_setup(self.data.execution_index[target])
-
                     start_time = time.perf_counter()
 
                     cmd = CommandExecutor(self.data, target, "setup")
                     for _ in cmd.execute():
                         time_text.plain = f"{time.perf_counter() - start_time:.2f}s"
-                        details_stdout.plain = cmd.latest_stdout()
-                        details_stderr.plain = cmd.latest_stderr()
+                        tree.set_stdout(cmd.latest_stdout())
+                        tree.set_stderr(cmd.latest_stderr())
 
                     cmd_time = time.perf_counter() - start_time
                     time_text.plain = f"{cmd_time:.2f}s"
@@ -197,8 +217,7 @@ class App:
                     if cmd.code == 0:
                         status_result.installed.append(target)
                         status_text.plain = "🟢 Installed"
-                        detail_tree.children = []
-                        detail_tree.add(current_cmd_display)
+                        tree.reset()
 
                     else:
                         status_text.plain = "🔴 Error"
@@ -243,17 +262,15 @@ class App:
             if isinstance(executable, RecipeInvocation):
                 recipe = self.data.recipe_index[executable.name]
                 if method == "setup":
-                    commands.append("\n".join(recipe.get_setup_commands(executable.args, self.data.recipe_index)))
+                    cmds = [it.replace("\n", "\\n ") for it in recipe.get_setup_commands(executable.args, self.data.recipe_index)]
+                    commands.append("\\n".join(cmds))
                 else:
-                    commands.append("\n".join(recipe.get_is_setup_commands(executable.args, self.data.recipe_index)))
+                    cmds = [it.replace("\n", "\\n ") for it in recipe.get_is_setup_commands(executable.args, self.data.recipe_index)]
+                    commands.append("\\n ".join(cmds))
             else:
-                commands.append(executable.command)
+                commands.append(executable.command.replace("\n", "\\n"))
 
-        # what's the best way to display multiple commands? They're bound to be too long. For now
-        # I'll just show the first one and maybe append a "..." if there are more.
-        has_multiple_commands = len(commands) > 1 or "\n" in commands[0]
-        first_command = commands[0].strip().replace("\n", "\\n")[:60]
-        return f"{first_command}{'...' if has_multiple_commands else ''}"
+        return "\\n ".join(commands[:3])
 
     def _display_is_setup(self, it: Dict[str, List[Executable]]) -> str:
         return self._display(it, method="is_setup")
