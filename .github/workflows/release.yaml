@@ -25,7 +25,8 @@ jobs:
         with:
           generateReleaseNotes: true
           tag: ${{ env.VERSION }}
-          release_name: Release ${{ env.VERSION }}
+          name: Release ${{ env.VERSION }}
+          discussionCategory: general
           body: |
             Install with pip:
 
