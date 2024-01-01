@@ -91,7 +91,8 @@ class App:
                 f"""
 Detected sudo in targets: '{targets}'.
 Running `sudo -v` to cache sudo credentials. You can disable this behavior with `booty --no-sudo`. See `booty --help` for details.
-"""
+""",
+                flush=True,
             )
             subprocess.run(["sudo", "-v"], check=True)
 
