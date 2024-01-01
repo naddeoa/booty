@@ -24,14 +24,19 @@ pip install booty-cli
 Or download the appropriate binary from the latest release. This script just downloads it for you and marks it as executable, but you should
 move it somewhere on your path. The script will drop it in your `pwd`.
 
+## Linux
 ```bash
-# Linux
 curl https://raw.githubusercontent.com/naddeoa/booty/master/scripts/booty-download-linux.sh | bash
+```
 
-# Mac x86
+## Mac x86
+
+```bash
 curl https://raw.githubusercontent.com/naddeoa/booty/master/scripts/booty-download-mac-x86.sh | bash
+```
 
-# Mac Arm
+## Mac Arm
+```bash
 curl https://raw.githubusercontent.com/naddeoa/booty/master/scripts/booty-download-mac-universal.sh | bash
 ```
 
