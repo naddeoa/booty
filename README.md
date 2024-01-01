@@ -118,7 +118,7 @@ infrequently, when you initially create your `install.booty` file or when you ma
 
 # Syntax Support
 
-See (naddeoa/vim-booty)[https://github.com/naddeoa/vim-booty] for the syntax plugin.
+See [naddeoa/vim-booty](https://github.com/naddeoa/vim-booty) for the syntax plugin.
 
 # Booty Language
 
