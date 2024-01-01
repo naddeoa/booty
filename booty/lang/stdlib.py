@@ -13,7 +13,7 @@ recipe ppa(name):
     setup:
         apt(software-properties-common)
         sudo add-apt-repository -y $((name))
-        sudo apt update
+        sudo apt-get update
     is_setup: grep $((name)) /etc/apt/sources.list
 
 recipe pipx(packages):

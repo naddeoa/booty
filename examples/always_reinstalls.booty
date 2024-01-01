@@ -1,14 +1,16 @@
 
 recipe always_install():
     setup: sleep .1
-    is_setup: 
+    is_setup:
         sleep .1
         false
 
 start <- a b c d e f g h i j k l m
 start: always_install()
 
-a: always_install()
+a:
+    setup: sudo apt-get update
+    is_setup:always_install()
 
 b -> a
 b: always_install()
@@ -25,15 +27,28 @@ k: always_install()
 l: always_install()
 m: always_install()
 
+complicated:
+    setup:
+        sleep .01
+        always_install()
+        true
+    is_setup:
+        sleep .01
+        always_install()
+        true
+        false
+
 always_fail -> b
 always_fail <- skip1 skip2 skip3 skip4
 always_fail:
-    setup: 
+    setup:
         sleep .1
         echo "This is an error message" 1>&2
         false
-    is_setup: 
+    is_setup:
         sleep .1
+        echo "This is a stdout message"
+        echo "This is a stderr message" 1>&2
         false
 
 skip1: always_install()

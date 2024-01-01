@@ -9,6 +9,6 @@ COPY ./dist/booty_linux_x86_64 ./
 
 ENV PATH="/home/myuser/.local/bin:${PATH}"
 
-RUN ./booty_linux_x86_64 -i -y
+RUN ./booty_linux_x86_64 -i -y --no-sudo
 
 CMD ["fish"]

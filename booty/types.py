@@ -9,9 +9,6 @@ from typing import Dict, List, Literal, Sequence, Union
 class ShellCommand:
     command: str
 
-    def execute(self) -> None:
-        subprocess.run(["bash", "-c", self.command], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-
 
 @dataclass
 class RecipeInvocation:
@@ -28,9 +25,6 @@ class TargetDefinition:
     definition: Union[Dict[str, List[Executable]], RecipeInvocation]
 
     # TODO put a bunch of stuff in here that I've been putting into types.py, execute.py, and app.py
-
-
-# TargetDefinition = Union[Dict[str, List[Executable]], RecipeInvocation]
 
 
 TargetNames = str
@@ -51,9 +45,10 @@ def compact_shell_executables(executables: List[Executable]) -> List[Executable]
             compacted_executables.append(executable)
         else:
             if len(compacted_executables) == 0 or isinstance(compacted_executables[-1], RecipeInvocation):
-                compacted_executables.append(executable)
+                first_cmd = ShellCommand(executable.command.strip())
+                compacted_executables.append(first_cmd)
             else:
-                compacted_executables[-1].command += "\n" + executable.command
+                compacted_executables[-1].command += "\n" + executable.command.strip()
 
     return compacted_executables
 
@@ -87,16 +82,16 @@ class RecipeDefinition:
         recipes: Dict[str, "RecipeDefinition"],
         method: Literal["setup", "is_setup"],
     ) -> None:
-        for command in self._iter_commands(args, executables, recipes, method):
+        for command in self.iter_commands(args, executables, recipes, method):
             subprocess.run(["bash", "-c", command], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
     def get_setup_commands(self, args: Sequence[Sequence[str]], recipes: Dict[str, "RecipeDefinition"]) -> List[str]:
-        return list(self._iter_commands(args, self.defs["setup"], recipes, method="setup"))
+        return list(self.iter_commands(args, self.defs["setup"], recipes, method="setup"))
 
     def get_is_setup_commands(self, args: Sequence[Sequence[str]], recipes: Dict[str, "RecipeDefinition"]) -> List[str]:
-        return list(self._iter_commands(args, self.defs["is_setup"], recipes, method="is_setup"))
+        return list(self.iter_commands(args, self.defs["is_setup"], recipes, method="is_setup"))
 
-    def _iter_commands(
+    def iter_commands(
         self,
         args: Sequence[Sequence[str]],
         executables: List[Executable],
