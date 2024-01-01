@@ -24,7 +24,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           generateReleaseNotes: true
-          tag_name: ${{ env.VERSION }}
+          tag: ${{ env.VERSION }}
           release_name: Release ${{ env.VERSION }}
           body: |
             Install with pip:
