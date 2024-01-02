@@ -51,7 +51,30 @@ always_fail:
         echo "This is a stderr message" 1>&2
         false
 
+
+stderr_first -> m
+stderr_first:
+    setup:
+        sleep .1
+        echo "This is an error message" 1>&2
+        false
+    is_setup:
+        sleep .1
+        echo "This is a stderr message" 1>&2
+        echo "This is a stdout message"
+        false
+
 skip1: always_install()
 skip2: always_install()
 skip3: always_install()
 skip4: always_install()
+
+skip1: always_install()
+skip2: always_install()
+skip3: always_install()
+skip4: always_install()
+
+a2 -> m
+a2:
+    setup: sudo apt-get update
+    is_setup:always_install()

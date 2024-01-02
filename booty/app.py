@@ -6,6 +6,7 @@ from typing import Dict, List, Literal
 
 from rich.box import SIMPLE
 from rich.text import Text
+from rich.padding import Padding
 from rich.table import Table
 from rich.console import Group
 from rich.live import Live
@@ -86,7 +87,7 @@ class App:
 
         if sudo_targets:
             # run sudo -v to make sure the user has sudo access
-            targets = ", ".join(sudo_targets)
+            targets = ", ".join(set(sudo_targets))
             print(
                 f"""
 Detected sudo in targets: '{targets}'.
@@ -105,10 +106,9 @@ Running `sudo -v` to cache sudo credentials. You can disable this behavior with 
         }
 
         table = Table(title="Target Status", show_header=True, show_edge=False, title_style="bold", box=SIMPLE)
-
         table.add_column("Target", no_wrap=True, width=20)
-        table.add_column("Dependencies", width=20)
-        table.add_column("Status", width=20)
+        table.add_column("Dependencies", width=20, no_wrap=True)
+        table.add_column("Status", width=20, no_wrap=True)
         table.add_column("Details", width=70, no_wrap=True)
         table.add_column("Time", justify="right", width=10)
 
@@ -173,20 +173,24 @@ Running `sudo -v` to cache sudo credentials. You can disable this behavior with 
 
         table = Table(title="Setup Status", show_header=True, show_edge=False, title_style="bold", box=SIMPLE)
         table.add_column("Target", no_wrap=True, width=20)
-        table.add_column("Status", width=20)
+        table.add_column("Status", width=20, no_wrap=True)
         table.add_column("Details", width=93, no_wrap=True)
-        table.add_column("Time", justify="right", width=10)
+        table.add_column("Time", justify="right", width=10, no_wrap=True)
 
         missing_packages = set([*status_result.missing, *status_result.errors])
         overall_progress = Progress()
         overall_id = overall_progress.add_task("Status", total=len(missing_packages))
 
-        group = Group(table, overall_progress)
+        # table_padding = Text("\n" * (len(missing_packages) + 1))
+
+        max_padding = 0
+        padding = Padding(table, (0, 0, 0, 0))
+        group = Group(padding, overall_progress)
 
         total_time = 0.0
         status_result = StatusResult()
         gen = self.data.G.bfs()
-        with Live(group, refresh_per_second=_REFRESH_RATE):
+        with Live() as live:
             try:
                 next(gen)  # Skip the first fake target
                 target = gen.send(True)
@@ -210,6 +214,9 @@ Running `sudo -v` to cache sudo credentials. You can disable this behavior with 
                         time_text.plain = f"{time.perf_counter() - start_time:.2f}s"
                         tree.set_stdout(cmd.latest_stdout())
                         tree.set_stderr(cmd.latest_stderr())
+                        max_padding = max(max_padding, tree.height())
+                        padding.bottom = abs(max_padding - tree.height())
+                        live.update(group)
 
                     cmd_time = time.perf_counter() - start_time
                     time_text.plain = f"{cmd_time:.2f}s"
@@ -219,6 +226,8 @@ Running `sudo -v` to cache sudo credentials. You can disable this behavior with 
                         status_result.installed.append(target)
                         status_text.plain = "🟢 Installed"
                         tree.reset()
+                        padding.bottom = abs(max_padding - tree.height())
+                        live.update(group)
 
                     else:
                         status_text.plain = "🔴 Error"
@@ -227,6 +236,7 @@ Running `sudo -v` to cache sudo credentials. You can disable this behavior with 
 
                     target = gen.send(cmd.code == 0)
                     overall_progress.advance(overall_id)
+                    live.update(group)
 
             except StopIteration as e:
                 skipped: List[str] = e.value
