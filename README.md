@@ -56,7 +56,7 @@ Options:
   -i, --install       Install all uninstalled targets
   -d, --debug         See the AST of the config file
   -l, --log-dir TEXT  Where to store logs. Defaults to ./logs
-  -s, --no-sudo       Don't allow booty to prompt with sudo -v. Instead, you
+  --no-sudo       Don't allow booty to prompt with sudo -v. Instead, you
                       can manually run sudo -v before using booty to cache
                       credentials for any targets that use sudo. By default,
                       booty runs sudo -v upfront if you use sudo in any
