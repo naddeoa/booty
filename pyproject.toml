@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "booty-cli"
-version = "1.0.9"
+version = "1.0.10"
 description = "A language and command line utility for bootstrapping the setup of personal OS installs."
 homepage = "https://github.com/naddeoa/booty"
 repository = "https://github.com/naddeoa/booty"
