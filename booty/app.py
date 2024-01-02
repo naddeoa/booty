@@ -106,10 +106,9 @@ Running `sudo -v` to cache sudo credentials. You can disable this behavior with 
         }
 
         table = Table(title="Target Status", show_header=True, show_edge=False, title_style="bold", box=SIMPLE)
-
         table.add_column("Target", no_wrap=True, width=20)
-        table.add_column("Dependencies", width=20)
-        table.add_column("Status", width=20)
+        table.add_column("Dependencies", width=20, no_wrap=True)
+        table.add_column("Status", width=20, no_wrap=True)
         table.add_column("Details", width=70, no_wrap=True)
         table.add_column("Time", justify="right", width=10)
 
@@ -174,9 +173,9 @@ Running `sudo -v` to cache sudo credentials. You can disable this behavior with 
 
         table = Table(title="Setup Status", show_header=True, show_edge=False, title_style="bold", box=SIMPLE)
         table.add_column("Target", no_wrap=True, width=20)
-        table.add_column("Status", width=20)
+        table.add_column("Status", width=20, no_wrap=True)
         table.add_column("Details", width=93, no_wrap=True)
-        table.add_column("Time", justify="right", width=10)
+        table.add_column("Time", justify="right", width=10, no_wrap=True)
 
         missing_packages = set([*status_result.missing, *status_result.errors])
         overall_progress = Progress()
