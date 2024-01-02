@@ -145,8 +145,8 @@ class CommandExecutor:
     def all_stderr(self) -> str:
         return "\n".join(self.stderr)
 
-    def latest_stdout(self, tail_n: int = 5) -> str:
-        return "\n".join(self.stdout[-tail_n:])
+    def latest_stdout(self, tail_n: int = 5) -> List[str]:
+        return self.stdout[-tail_n:]
 
-    def latest_stderr(self, tail_n: int = 5) -> str:
-        return "\n".join(self.stderr[-tail_n:])
+    def latest_stderr(self, tail_n: int = 5) -> List[str]:
+        return self.stderr[-tail_n:]
