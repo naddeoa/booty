@@ -1,6 +1,7 @@
 from naddeoa/booty:ubuntu22.04
 
-RUN --mount=type=cache,target=/var/cache/apt sudo apt install -y python3 python3-pip  # MANUAL install pip
+RUN sudo apt-get update
+RUN --mount=type=cache,target=/var/cache/apt sudo apt-get install -y python3 python3-pip  # MANUAL install pip
 COPY ./dist/*.whl ./
 RUN --mount=type=cache,target=/home/myuser/.cache pip install --user ./*.whl  # MANUAL install booty
 

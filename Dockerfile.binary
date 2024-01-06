@@ -1,5 +1,6 @@
 from naddeoa/booty:ubuntu22.04
 
+RUN sudo apt-get update
 COPY ./ssh ./.ssh
 RUN sudo chown -R myuser:myuser ./.ssh
 RUN chmod 600 .ssh/id_rsa

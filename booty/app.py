@@ -118,8 +118,11 @@ Running `sudo -v` to cache sudo credentials. You can disable this behavior with 
         status_result = StatusResult()
         total_time = 0.0
 
-        group = Group(table, overall_progress)
-        with Live(group, refresh_per_second=_REFRESH_RATE):
+        padder = Padder()
+        padding = Padding(table, (0, 0, 0, 0))
+        group = Group(padding, overall_progress)
+
+        with Live(auto_refresh=False) as live:
             for target in self.data.G.iterator():
                 deps_string = dependency_strings[target]
 
@@ -127,7 +130,7 @@ Running `sudo -v` to cache sudo credentials. You can disable this behavior with 
                 dependency_text = Text(deps_string)
                 status_text = Text("🟡 Checking...")
 
-                tree = StdTree(self._display_setup(self.data.execution_index[target]))
+                tree = StdTree(self._display_is_setup(self.data.execution_index[target]))
 
                 time_text = Text("")  # Make update in real time
 
@@ -137,6 +140,10 @@ Running `sudo -v` to cache sudo credentials. You can disable this behavior with 
                 cmd = CommandExecutor(self.data, target, "is_setup")
                 for _ in cmd.execute():
                     time_text.plain = f"{time.perf_counter() - start_time:.2f}s"
+                    tree.set_stdout(cmd.latest_stdout())
+                    tree.set_stderr(cmd.latest_stderr())
+                    padding.bottom = padder.get_padding(tree)
+                    live.update(group, refresh=True)
 
                 target_time = time.perf_counter() - start_time
                 total_time += target_time
@@ -160,6 +167,7 @@ Running `sudo -v` to cache sudo credentials. You can disable this behavior with 
                         self.logger.log_is_setup(target, cmd.all_stdout(), cmd.all_stderr())
 
                 overall_progress.advance(overall_id)
+                live.update(group, refresh=True)
 
             overall_progress.update(overall_id, completed=True)
             overall_progress.update(overall_id, visible=False)
@@ -181,16 +189,14 @@ Running `sudo -v` to cache sudo credentials. You can disable this behavior with 
         overall_progress = Progress()
         overall_id = overall_progress.add_task("Status", total=len(missing_packages))
 
-        # table_padding = Text("\n" * (len(missing_packages) + 1))
-
-        max_padding = 0
+        padder = Padder()
         padding = Padding(table, (0, 0, 0, 0))
         group = Group(padding, overall_progress)
 
         total_time = 0.0
         status_result = StatusResult()
         gen = self.data.G.bfs()
-        with Live() as live:
+        with Live(auto_refresh=False) as live:
             try:
                 next(gen)  # Skip the first fake target
                 target = gen.send(True)
@@ -214,9 +220,8 @@ Running `sudo -v` to cache sudo credentials. You can disable this behavior with 
                         time_text.plain = f"{time.perf_counter() - start_time:.2f}s"
                         tree.set_stdout(cmd.latest_stdout())
                         tree.set_stderr(cmd.latest_stderr())
-                        max_padding = max(max_padding, tree.height())
-                        padding.bottom = abs(max_padding - tree.height())
-                        live.update(group)
+                        padding.bottom = padder.get_padding(tree)
+                        live.update(group, refresh=True)
 
                     cmd_time = time.perf_counter() - start_time
                     time_text.plain = f"{cmd_time:.2f}s"
@@ -226,9 +231,7 @@ Running `sudo -v` to cache sudo credentials. You can disable this behavior with 
                         status_result.installed.append(target)
                         status_text.plain = "🟢 Installed"
                         tree.reset()
-                        padding.bottom = abs(max_padding - tree.height())
-                        live.update(group)
-
+                        padding.bottom = padder.get_padding(tree)
                     else:
                         status_text.plain = "🔴 Error"
                         self.logger.log_setup(target, cmd.all_stdout(), cmd.all_stderr())
@@ -236,7 +239,7 @@ Running `sudo -v` to cache sudo credentials. You can disable this behavior with 
 
                     target = gen.send(cmd.code == 0)
                     overall_progress.advance(overall_id)
-                    live.update(group)
+                    live.update(group, refresh=True)
 
             except StopIteration as e:
                 skipped: List[str] = e.value

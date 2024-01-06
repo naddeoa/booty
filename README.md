@@ -25,6 +25,7 @@ Or download the appropriate binary from the latest release. This script just dow
 move it somewhere on your path. The script will drop it in your `pwd`.
 
 ## Linux
+
 ```bash
 curl https://raw.githubusercontent.com/naddeoa/booty/master/scripts/booty-download-linux.sh | bash
 ```
@@ -36,6 +37,7 @@ curl https://raw.githubusercontent.com/naddeoa/booty/master/scripts/booty-downlo
 ```
 
 ## Mac Arm
+
 ```bash
 curl https://raw.githubusercontent.com/naddeoa/booty/master/scripts/booty-download-mac-universal.sh | bash
 ```
@@ -56,7 +58,7 @@ Options:
   -i, --install       Install all uninstalled targets
   -d, --debug         See the AST of the config file
   -l, --log-dir TEXT  Where to store logs. Defaults to ./logs
-  --no-sudo       Don't allow booty to prompt with sudo -v. Instead, you
+  --no-sudo           Don't allow booty to prompt with sudo -v. Instead, you
                       can manually run sudo -v before using booty to cache
                       credentials for any targets that use sudo. By default,
                       booty runs sudo -v upfront if you use sudo in any
@@ -263,4 +265,3 @@ There are a lot of good things about make though. My favorite relevant parts are
 
 - Easy, independent dependency specification
 - Plain old shell for each target definition.
-
