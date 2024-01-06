@@ -15,12 +15,12 @@ from rich.progress import Progress
 from booty.ast_util import get_dependencies, get_executable_index, get_recipe_definition_index
 from booty.execute import BootyData, CommandExecutor, get_commands
 from booty.graph import DependencyGraph
+from booty.lang import get_stdlib
 from booty.parser import parse
 from booty.target_logger import TargetLogger
 from booty.types import Executable, RecipeInvocation
-from booty.ui import StdTree
+from booty.ui import Padder, StdTree
 from booty.validation import validate
-from booty.lang.stdlib import stdlib
 
 
 _REFRESH_RATE = 8
@@ -52,7 +52,7 @@ class App:
         if debug:
             print("AST:")
             print(ast.pretty())
-        stdlib_ast = parse(stdlib)
+        stdlib_ast = parse(get_stdlib())
         executables = get_executable_index(ast)
         if debug:
             print("Executables:")
