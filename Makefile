@@ -14,8 +14,11 @@ all: build $(binary)
 build:  # Build dist wheels
 	poetry build
 
-build-docker:  # Build the test docker image.
+build-docker: build  # Build the test docker image that uses booty wheel.
 	docker build . -t $(project)
+
+build-docker-binary: build-binary-linux  # Build the test docker image that uses booty binary.
+	docker build . -f Dockerfile.binary -t $(project)-bin
 
 build-docker-base:  ## Build the base docker image for integ testing.
 	docker build . -f Dockerfile.base -t naddeoa/booty:ubuntu22.04
@@ -107,11 +110,15 @@ run-bin:  ## Run the generated binary.
 run-docker:  ## Run the test docker image from build-docker.
 	docker run --rm -it $(project)
 
+run-docker-binary:  ## Run the test docker image from build-docker-binary.
+	docker run --rm -it $(project)-bin
+
 debug: ## Run booty in debug mode via debugpy.
 	poetry run python -m debugpy --listen localhost:5678 --wait-for-client -m $(project).cli
 
 test:
 	poetry run pytest
+
 
 ##
 ## Pre commit targets
