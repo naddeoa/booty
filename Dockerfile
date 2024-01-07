@@ -15,4 +15,4 @@ ENV PATH="/home/myuser/.local/bin:${PATH}"
 # Don't prompt for sudo password in CI. Even when the user is in the sudoers file it becomes an interactive prompt.
 RUN booty -i -y --no-sudo
 
-CMD ["fish"]
+CMD ["bash"]
