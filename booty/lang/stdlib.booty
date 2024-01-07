@@ -1,4 +1,3 @@
-stdlib = """
 recipe apt(packages):
     setup: sudo apt-get install -y $((packages))
     is_setup:
@@ -11,7 +10,6 @@ recipe apt(packages):
 
 recipe ppa(name):
     setup:
-        apt(software-properties-common)
         sudo add-apt-repository -y $((name))
         sudo apt-get update
     is_setup: grep $((name)) /etc/apt/sources.list
@@ -40,4 +38,3 @@ recipe cp(src dst):
         cp -r $((src)) $((dst))
     is_setup: test -e $((dst))
 
-"""

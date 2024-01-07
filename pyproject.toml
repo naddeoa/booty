@@ -8,19 +8,20 @@ keywords = ["bootstrap", "booty", "setup", "cli", "tool"]
 authors = ["Anthony Naddeo <anthony.naddeo@gmail.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{ include = "booty/**/*.py" }]
-
+packages = [
+    { include = "booty/**/*.py"},
+    { include = "booty/**/*.lark"},
+    { include = "booty/**/*.booty"}
+]
 
 [tool.poetry.scripts]
 booty = "booty.cli:cli"
-
 
 [tool.poetry.dependencies]
 python = ">=3.9, <3.13"
 lark = "^1.1.8"
 click = "^8.1.7"
 rich = "^13.7.0"
-
 
 [tool.poetry.group.dev.dependencies]
 pyright = "^1.1.338"

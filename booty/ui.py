@@ -1,9 +1,4 @@
 from typing import List, Optional
-from rich.console import Group
-from rich.live import Live
-from rich.progress import Progress
-from rich.padding import Padding
-from rich.table import Table
 from rich.text import Text
 from rich.tree import Tree
 
@@ -68,20 +63,11 @@ class StdTree:
         return cmd_height + stdout_height + stderr_height
 
 
-class PaddedTable:
-    def __init__(self, table: Table, total: int) -> None:
-        self.table = table
-        self._progress = Progress()
-        # self.progress_id = progress.add_task("Status", total=total)
+class Padder:
+    def __init__(self) -> None:
         self._max_padding = 0
-        self._padding = Padding(table, (0, 0, 0, 0))
-        self._group = Group(self._padding, self._progress)
 
-    # def get_std_tree(self, cmd: str) -> StdTree:
-    # self.std_tree = StdTree(self._display_setup(self.data.execution_index[target]))
-
-    def update(self, live: Live) -> None:
-        pass
-
-        # self._padding.bottom = abs(self._max_padding - self.std_tree.height())
-        # live.update(group)
+    def get_padding(self, tree: StdTree) -> int:
+        height = tree.height()
+        self._max_padding = max(self._max_padding, height)
+        return self._max_padding - height

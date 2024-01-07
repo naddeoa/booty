@@ -25,6 +25,7 @@ clean:
 
 build-binary-linux:  # Build the binary variant of booty via pyinstaller for linux.
 	poetry run pyinstaller ./booty/cli.py -n booty_linux_x86_64 -y \
+		--add-data="./booty/lang/:./booty/lang/" \
 		--exclude-module pandas \
 		--exclude-module numpy \
 		--exclude-module pytest \
@@ -35,6 +36,7 @@ build-binary-linux:  # Build the binary variant of booty via pyinstaller for lin
 
 build-binary-mac:  # Build the binary variant of booty via pyinstaller for mac.
 	poetry run pyinstaller ./booty/cli.py -n booty_mac_x86_64 -y \
+		--add-data="./booty/lang/:./booty/lang/" \
 		--target-arch x86_64 \
 		--exclude-module pandas \
 		--exclude-module numpy \
@@ -46,6 +48,7 @@ build-binary-mac:  # Build the binary variant of booty via pyinstaller for mac.
 
 build-binary-mac-arm:  # Build the binary variant of booty via pyinstaller for arm mac.
 	poetry run pyinstaller ./booty/cli.py -n booty_mac_arm64 -y \
+		--add-data="./booty/lang/:./booty/lang/" \
 		--target-arch arm64 \
 		--exclude-module pandas \
 		--exclude-module numpy \
@@ -57,6 +60,7 @@ build-binary-mac-arm:  # Build the binary variant of booty via pyinstaller for a
 
 build-binary-mac-universal:  # Build the binary variant of booty via pyinstaller for arm mac.
 	poetry run pyinstaller ./booty/cli.py -n booty_mac_universal -y \
+		--add-data="./booty/lang/:./booty/lang/" \
 		--target-arch universal2 \
 		--exclude-module pandas \
 		--exclude-module numpy \
