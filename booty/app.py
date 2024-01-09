@@ -23,9 +23,6 @@ from booty.ui import Padder, StdTree
 from booty.validation import validate
 
 
-_REFRESH_RATE = 8
-
-
 @dataclass
 class StatusResult:
     missing: List[str] = field(default_factory=list)

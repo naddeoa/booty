@@ -155,3 +155,22 @@ frog:
     setup: raco pkg install --auto frog
     is_setup: raco pkg show frog | grep Package
 
+
+
+
+##
+## Silly test cases that aren't real
+##
+recipe first():
+    setup: sleep .1
+    is_setup:
+        sleep .1
+        false
+
+# recipe that calls another recipe
+recipe calls_first():
+    setup: first()
+    is_setup: first()
+
+
+first_target: calls_first()

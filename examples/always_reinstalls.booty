@@ -1,4 +1,17 @@
 
+recipe first():
+    setup: sleep .1
+    is_setup:
+        sleep .1
+        false
+
+recipe calls_first():
+    setup: first()
+    is_setup: first()
+
+
+first_target: calls_first()
+
 recipe always_install():
     setup: sleep .1
     is_setup:
