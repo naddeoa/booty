@@ -239,7 +239,7 @@ recipe cp(src dst):
 
 ```
 
-Any of these can be referenced from any booty.install file, and you can redifine them locally if you want different recipe logic that uses
+Any of these can be referenced from any booty.install file, and you can redefine them locally if you want different recipe logic that uses
 the same name.
 
 # FAQ
