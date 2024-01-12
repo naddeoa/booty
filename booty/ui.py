@@ -29,7 +29,11 @@ class StdTree:
 
             if self._stderr_text:
                 # Swap the children so that stdout is always first
-                self.tree.children = [self.tree.children[1], self.tree.children[0]]
+                # In this case, there will be 3 things in the tree.
+                # 0 - the cmd from init
+                # 1 - the stderr branch since it was apparently added first
+                # 2 - the stdout branch we just added
+                self.tree.children = [self.tree.children[2], self.tree.children[1]]
 
         self._stdout_str = stdout
         self._stdout_text.plain = "\n".join(stdout)
