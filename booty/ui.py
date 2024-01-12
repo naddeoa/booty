@@ -1,4 +1,5 @@
-from typing import List, Optional
+from typing import Any, Callable, List, Optional, Union
+from datetime import datetime
 from rich.text import Text
 from rich.tree import Tree
 
@@ -75,3 +76,53 @@ class Padder:
         height = tree.height()
         self._max_padding = max(self._max_padding, height)
         return self._max_padding - height
+
+
+class UpdateTracker:
+    """
+    Class to enable dynamic updates on the UI tables. By default, rich allows you to set a refresh rate or trigger manual
+    updates. This makes manual updates more performant by doing quick 'dirty' checks to determine if updating ins required. Updating
+    is technically always required because the table's 'elapsed time' column always changes, but we don't want to update the table just
+    because of that.
+
+    This class tracks some state and has a min/max ms time config to keep the table looking responsive without updating too often. The
+    driver for this was my CPU usage while the installer was running, paired with the size of the asciinema files that were generated
+    because of frequent updates. Obviously, the more frequent the update the better the table looks, but that's the trade off.
+
+    """
+
+    def __init__(self, max_update_timeout_ms: float = 5000, min_update_ms: float = 200) -> None:
+        """
+        Args:
+            max_update_timeout_ms: The maximum amount of time in milliseconds that can pass before an update is forced. This is useful
+            because the table usually contains an 'elapsed time' column that should update fairly frequently regardless of everything else.
+            min_update_ms: The minimum amount of time in milliseconds that must pass before an update is allowed. This prevents updates
+            from getting too frequent.
+        """
+        self._timeout_ms = max_update_timeout_ms
+        self._min_update_ms = min_update_ms
+        self._last_update_timestamp_ms = datetime.now().timestamp() * 1000
+        self._last_update_state: List[Any] = []
+
+    def max_update_time_passed(self, now: float) -> bool:
+        if now - self._last_update_timestamp_ms > self._timeout_ms:
+            return True
+        return False
+
+    def min_update_time_passed(self, now: float) -> bool:
+        if now - self._last_update_timestamp_ms > self._min_update_ms:
+            return True
+        return False
+
+    def _update(self, now: float, update_fn: Callable[[], None], state: List[Union[str, List[str]]]):
+        update_fn()
+        self._last_update_timestamp_ms = now
+        self._last_update_state = state
+
+    def update(self, update_fn: Callable[[], None], state: List[Union[str, List[str]]]):
+        now = datetime.now().timestamp() * 1000
+
+        if self.min_update_time_passed(now) and state != self._last_update_state:
+            self._update(now, update_fn, state)
+        elif self.max_update_time_passed(now):
+            self._update(now, update_fn, state)

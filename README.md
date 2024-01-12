@@ -11,7 +11,7 @@ system up, and to test if everything was actually setup.
 
 <!-- <p align="center"><img src="https://raw.githubusercontent.com/naddeoa/booty/master/static/booty-status.jpg"/></p> </br> -->
 
-<a href="https://asciinema.org/a/7Uv7wuu4AxX96mBvKIYTtefDU" target="_blank"><img src="https://asciinema.org/a/7Uv7wuu4AxX96mBvKIYTtefDU.svg" /></a>
+<a href="https://asciinema.org/a/WUdlyBpkAJJ4kXMfRFNpyfO7c" target="_blank"><img src="https://asciinema.org/a/WUdlyBpkAJJ4kXMfRFNpyfO7c.svg" /></a>
 
 # Install
 

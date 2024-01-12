@@ -19,7 +19,7 @@ from booty.lang import get_stdlib
 from booty.parser import parse
 from booty.target_logger import TargetLogger
 from booty.types import Executable, RecipeInvocation
-from booty.ui import Padder, StdTree
+from booty.ui import Padder, StdTree, UpdateTracker
 from booty.validation import validate
 
 
@@ -193,6 +193,7 @@ Running `sudo -v` to cache sudo credentials. You can disable this behavior with 
         total_time = 0.0
         status_result = StatusResult()
         gen = self.data.G.bfs()
+        tracker = UpdateTracker()
         with Live(auto_refresh=False) as live:
             try:
                 next(gen)  # Skip the first fake target
@@ -214,11 +215,16 @@ Running `sudo -v` to cache sudo credentials. You can disable this behavior with 
 
                     cmd = CommandExecutor(self.data, target, "setup")
                     for _ in cmd.execute():
-                        time_text.plain = f"{time.perf_counter() - start_time:.2f}s"
-                        tree.set_stdout(cmd.latest_stdout())
-                        tree.set_stderr(cmd.latest_stderr())
+                        time_fmt = f"{time.perf_counter() - start_time:.2f}s"
+                        stdout = cmd.latest_stdout()
+                        stderr = cmd.latest_stderr()
+                        time_text.plain = time_fmt
+
+                        tree.set_stdout(stdout)
+                        tree.set_stderr(stderr)
                         padding.bottom = padder.get_padding(tree)
-                        live.update(group, refresh=True)
+
+                        tracker.update(lambda: live.update(group, refresh=True), [target, stdout, stderr])
 
                     cmd_time = time.perf_counter() - start_time
                     time_text.plain = f"{cmd_time:.2f}s"
