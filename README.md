@@ -52,8 +52,7 @@ display in real-time as a second table with a row for each target getting setup.
 Usage: booty [OPTIONS]
 
 Options:
-  -c, --config TEXT   Path to the install.sysc file. Defaults to
-                      ./install.booty
+  -c, --config TEXT   Path to the booty file. Defaults to ./install.booty
   -s, --status        Check the status of all known targets
   -i, --install       Install all uninstalled targets
   -d, --debug         See the AST of the config file
