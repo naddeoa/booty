@@ -108,7 +108,7 @@ run-bin:  ## Run the generated binary.
 	$(binary)
 
 run-docker:  ## Run the test docker image from build-docker.
-	docker run --rm -it $(project)
+	docker run --rm -it --entrypoint /bin/bash $(project)
 
 run-docker-binary:  ## Run the test docker image from build-docker-binary.
 	docker run --rm -it $(project)-bin
