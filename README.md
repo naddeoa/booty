@@ -136,7 +136,7 @@ Parameters can optionally container whitespace as well, meaning `recipe_name(a b
 methods consists of one or more executable statements which can either be a line to invoke in shell or another recipe invocation.
 
 This is a recipe named `apt` who's `setup` executes the shell command `sudo apt-get install -y $((packages))`, where `$((packages))` will be
-substituted by the value of the paraemter `packages` when it's run. Its `is_setup` executes a multiline shell statement. The shell is
+substituted by the value of the parameter `packages` when it's run. Its `is_setup` executes a multiline shell statement. The shell is
 invoked via `bash -c ...`.
 
 ```make
