@@ -44,6 +44,12 @@ curl https://raw.githubusercontent.com/naddeoa/booty/master/scripts/booty-downlo
 
 # Usage
 
+Just execute `booty` from a directory with an `install.booty` file.
+
+```
+booty
+```
+
 You can run `booty --help` to see all of the options. You'll generally cd to a directory with an `install.booty` file and run `booty`.
 You'll see a table that shows the status of all of your targets and you'll be prompted to install all of the missing ones, which will
 display in real-time as a second table with a row for each target getting setup.
@@ -72,7 +78,7 @@ Setting your system up is inherently side effect prone. Every command from `apt`
 system that you didn't realize. If you want to execute your `install.booty` file without worrying about what might go wrong before you use
 it for real then the best way to do that is via Docker (which is how this repo does "integration" testing).
 
-There is a [public docker image (naddeoa/booty:ubuntu22.04)](https://hub.docker.com/repository/docker/naddeoa/booty/general) that you can
+There is a [public docker image [naddeoa/booty:ubuntu22.04](https://hub.docker.com/repository/docker/naddeoa/booty/general) that you can
 base your own Dockerfile on that mimics what a fresh install looks like for Ubuntu 22.04 users. You can create an image that does roughly
 what you would do to your system to get the `booty` command working, and then run it and make sure everything works as expected. The image's
 user is named `myuser` and its password is `password`. You can see how its created in
