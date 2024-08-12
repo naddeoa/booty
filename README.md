@@ -78,7 +78,7 @@ Setting your system up is inherently side effect prone. Every command from `apt`
 system that you didn't realize. If you want to execute your `install.booty` file without worrying about what might go wrong before you use
 it for real then the best way to do that is via Docker (which is how this repo does "integration" testing).
 
-There is a [public docker image [naddeoa/booty:ubuntu22.04](https://hub.docker.com/repository/docker/naddeoa/booty/general) that you can
+There is a public docker image [naddeoa/booty:ubuntu22.04](https://hub.docker.com/repository/docker/naddeoa/booty/general) that you can
 base your own Dockerfile on that mimics what a fresh install looks like for Ubuntu 22.04 users. You can create an image that does roughly
 what you would do to your system to get the `booty` command working, and then run it and make sure everything works as expected. The image's
 user is named `myuser` and its password is `password`. You can see how its created in
