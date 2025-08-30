@@ -150,7 +150,7 @@ recipe apt(packages):
     setup: sudo apt-get install -y $((packages))
     is_setup:
       for pkg in $(echo $((packages)) | tr " " "\n"); do
-        if ! dpkg -l "$pkg" &> /dev/null; then
+        if ! dpkg -s "$pkg" &> /dev/null; then
           echo "$pkg is not installed."
           exit 1
         fi
@@ -207,7 +207,7 @@ recipe apt(packages):
     setup: sudo apt-get install -y $((packages))
     is_setup:
       for pkg in $(echo $((packages)) | tr " " "\n"); do
-        if ! dpkg -l "$pkg" &> /dev/null; then
+        if ! dpkg -s "$pkg" &> /dev/null; then
           echo "$pkg is not installed."
           exit 1
         fi
